@@ -1,0 +1,6 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Verquo icon</title>
+<rect x="0" y="0" width="256" height="256" rx="52" fill="#1F5C52"/>
+<path d="M62 128 L110 176 L196 78" fill="none" stroke="#F5F3EF" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="176" cy="62" r="14" fill="#C07A3A"/>
+</svg>

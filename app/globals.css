@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root {
+  --background: #F5F3EF;
+  --foreground: #1A1915;
+  --card: #FFFFFF;
+  --card-foreground: #1A1915;
+  --primary: #1F5C52;
+  --primary-foreground: #F5F3EF;
+  --secondary: #EAE7E0;
+  --secondary-foreground: #3D3B35;
+  --muted: #EAE7E0;
+  --muted-foreground: #6B6860;
+  --accent: #C07A3A;
+  --accent-foreground: #FFFFFF;
+  --border: #D8D4CC;
+  --ring: #1F5C52;
+  --destructive: #B84040;
+  --success: #2A7A55;
+  --radius: 6px;
+}
+
+.dark {
+  --background: #0E1117;
+  --foreground: #E6E2D8;
+  --card: #161B22;
+  --card-foreground: #E6E2D8;
+  --primary: #3A8C7E;
+  --primary-foreground: #0E1117;
+  --secondary: #1E2430;
+  --secondary-foreground: #A8A49C;
+  --muted: #1A2028;
+  --muted-foreground: #7A7670;
+  --accent: #D4924E;
+  --accent-foreground: #0E1117;
+  --border: #2A2F3A;
+  --ring: #3A8C7E;
+  --destructive: #C45050;
+  --success: #3A9060;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
