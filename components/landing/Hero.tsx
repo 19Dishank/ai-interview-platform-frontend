@@ -11,7 +11,7 @@ export default function Hero() {
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/8 via-transparent to-transparent pointer-events-none" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-20 md:pt-32 md:pb-28">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-20 md:pt-24 md:pb-28">
         <div className="max-w-3xl">
           <Badge variant="outline" className="mb-6">Now in beta — free for candidates</Badge>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-semibold leading-tight tracking-tight mb-6">

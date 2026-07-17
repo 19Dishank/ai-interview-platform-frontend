@@ -7,12 +7,14 @@ import { User, Briefcase, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/context/ThemeProvider'
 
 type Role = 'candidate' | 'recruiter'
 type Step = 'role' | 'email' | 'otp'
 
 function SignupForm() {
   const router = useRouter()
+  const { theme } = useTheme()
   const searchParams = useSearchParams()
   const roleParam = searchParams.get('role') as Role | null
   const [role, setRole] = useState<Role>(roleParam || 'candidate')
@@ -40,18 +42,11 @@ function SignupForm() {
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center gap-2 mb-10 justify-center">
           <img
-            src="/verquo-lockup-light.svg"
+            src={`/verquo-lockup-${theme}.svg`}
             alt="Verquo Logo"
             width={112}
             height={32}
-            className="h-8 w-auto object-contain dark:hidden"
-          />
-          <img
-            src="/verquo-lockup-dark.svg"
-            alt="Verquo Logo"
-            width={112}
-            height={32}
-            className="h-8 w-auto object-contain hidden dark:block"
+            className="h-8 w-auto object-contain"
           />
         </Link>
 

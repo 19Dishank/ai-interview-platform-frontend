@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { useTheme } from '@/context/ThemeProvider'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { theme } = useTheme()
   const [step, setStep] = useState<'email' | 'otp'>('email')
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
@@ -32,7 +34,7 @@ export default function LoginPage() {
       <div className="hidden md:flex md:w-1/2 bg-primary text-primary-foreground flex-col justify-between p-12">
         <Link href="/" className="flex items-center gap-2">
           <img
-            src="/verquo-lockup-dark.svg"
+            src={`/verquo-lockup-${theme === "light" ? "dark" : "light"}.svg`}
             alt="Verquo Logo"
             width={112}
             height={32}

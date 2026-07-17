@@ -45,14 +45,7 @@ export function Navbar({ theme, onToggleTheme, portal, userName }: NavbarProps) 
           <Link href="/" className="flex items-center gap-2 shrink-0">
             {/* Mobile Icon */}
             <img
-              src="/verquo-icon.svg"
-              alt="Verquo Icon"
-              width={28}
-              height={28}
-              className="w-7 h-7 object-contain dark:hidden sm:hidden"
-            />
-            <img
-              src="/verquo-icon-dark.svg"
+              src={`/verquo-icon${theme === "dark" ? '-dark' : ''}.svg`}
               alt="Verquo Icon"
               width={28}
               height={28}
@@ -60,14 +53,7 @@ export function Navbar({ theme, onToggleTheme, portal, userName }: NavbarProps) 
             />
             {/* Desktop Lockup Logo */}
             <img
-              src="/verquo-lockup-light.svg"
-              alt="Verquo Logo"
-              width={98}
-              height={28}
-              className="h-7 w-auto object-contain dark:hidden hidden sm:block"
-            />
-            <img
-              src="/verquo-lockup-dark.svg"
+              src={`/verquo-lockup-${theme}.svg`}
               alt="Verquo Logo"
               width={98}
               height={28}

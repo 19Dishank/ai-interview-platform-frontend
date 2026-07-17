@@ -17,7 +17,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saved = localStorage.getItem('theme') as Theme | null
     const activeTheme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    
+
     // Set theme asynchronously to avoid synchronous setState during render/mount phase
     setTimeout(() => {
       setTheme(activeTheme)
