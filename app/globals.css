@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap');
-@import 'tailwindcss';
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
 
 @theme inline {
   --color-background: var(--background);
@@ -21,48 +21,48 @@
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 4px);
-  --font-sans: 'DM Sans', system-ui, sans-serif;
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 :root {
-  --background: #F5F3EF;
-  --foreground: #1A1915;
-  --card: #FFFFFF;
-  --card-foreground: #1A1915;
-  --primary: #1F5C52;
-  --primary-foreground: #F5F3EF;
-  --secondary: #EAE7E0;
-  --secondary-foreground: #3D3B35;
-  --muted: #EAE7E0;
-  --muted-foreground: #6B6860;
-  --accent: #C07A3A;
-  --accent-foreground: #FFFFFF;
-  --border: #D8D4CC;
-  --ring: #1F5C52;
-  --destructive: #B84040;
-  --success: #2A7A55;
+  --background: #f5f3ef;
+  --foreground: #1a1915;
+  --card: #ffffff;
+  --card-foreground: #1a1915;
+  --primary: #1f5c52;
+  --primary-foreground: #f5f3ef;
+  --secondary: #eae7e0;
+  --secondary-foreground: #3d3b35;
+  --muted: #eae7e0;
+  --muted-foreground: #6b6860;
+  --accent: #c07a3a;
+  --accent-foreground: #ffffff;
+  --border: #d8d4cc;
+  --ring: #1f5c52;
+  --destructive: #b84040;
+  --success: #2a7a55;
   --radius: 6px;
 }
 
 .dark {
-  --background: #0E1117;
-  --foreground: #E6E2D8;
-  --card: #161B22;
-  --card-foreground: #E6E2D8;
-  --primary: #3A8C7E;
-  --primary-foreground: #0E1117;
-  --secondary: #1E2430;
-  --secondary-foreground: #A8A49C;
-  --muted: #1A2028;
-  --muted-foreground: #7A7670;
-  --accent: #D4924E;
-  --accent-foreground: #0E1117;
-  --border: #2A2F3A;
-  --ring: #3A8C7E;
-  --destructive: #C45050;
-  --success: #3A9060;
+  --background: #0e1117;
+  --foreground: #e6e2d8;
+  --card: #161b22;
+  --card-foreground: #e6e2d8;
+  --primary: #3a8c7e;
+  --primary-foreground: #0e1117;
+  --secondary: #1e2430;
+  --secondary-foreground: #a8a49c;
+  --muted: #1a2028;
+  --muted-foreground: #7a7670;
+  --accent: #d4924e;
+  --accent-foreground: #0e1117;
+  --border: #2a2f3a;
+  --ring: #3a8c7e;
+  --destructive: #c45050;
+  --success: #3a9060;
 }
 
 * {
@@ -74,13 +74,31 @@ html {
 }
 
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: "DM Sans", system-ui, sans-serif;
   background-color: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+::-moz-selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
