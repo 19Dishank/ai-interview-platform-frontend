@@ -8,7 +8,8 @@ export const metadata: Metadata = {
     default: "Verquo - AI-Powered Interview Marketplace",
     template: "%s | Verquo",
   },
-  description: "Verquo is an AI-powered technical interviewing platform. Take a rigorous interview once, and share verified technical assessments directly with recruiters.",
+  description:
+    "Verquo is an AI-powered technical interviewing platform. Take a rigorous interview once, and share verified technical assessments directly with recruiters.",
   keywords: [
     "AI interview",
     "technical assessment",
@@ -18,12 +19,13 @@ export const metadata: Metadata = {
     "Verquo",
     "software engineer job search",
     "AI coding test",
-    "interview marketplace"
+    "interview marketplace",
   ],
   authors: [{ name: "Verquo Team" }],
   openGraph: {
     title: "Verquo - AI-Powered Interview Marketplace",
-    description: "Take one AI-powered technical interview, and share verified technical assessments directly with recruiters.",
+    description:
+      "Take one AI-powered technical interview, and share verified technical assessments directly with recruiters.",
     url: "https://verquo.com",
     siteName: "Verquo",
     locale: "en_US",
@@ -32,7 +34,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Verquo - AI-Powered Interview Marketplace",
-    description: "Take one AI-powered technical interview, and share verified technical assessments directly with recruiters.",
+    description:
+      "Take one AI-powered technical interview, and share verified technical assessments directly with recruiters.",
   },
 };
 
@@ -42,11 +45,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html
+      lang="en"
+      className="h-full"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

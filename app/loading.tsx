@@ -1,67 +1,140 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from "react";
 
 const loadingSteps = [
-  'Connecting securely to Verquo...',
-  'Preparing your workspace...',
-  'Loading interview environment...',
-  'Verifying session credentials...',
-]
+  "Connecting securely to Verquo",
+  "Preparing your workspace",
+  "Loading interview environment",
+  "Verifying session credentials",
+];
 
 export default function Loading() {
-  const [stepIndex, setStepIndex] = useState(0)
+  const [stepIndex, setStepIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setStepIndex((prev) => (prev + 1) % loadingSteps.length)
-    }, 1500)
-    return () => clearInterval(interval)
-  }, [])
+      setStepIndex((prev) => (prev + 1) % loadingSteps.length);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background text-foreground transition-colors duration-300">
-      {/* Background radial gradient to add visual depth */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--color-primary)/0.03,_transparent_70%)] pointer-events-none" />
-      
-      <div className="relative flex flex-col items-center max-w-xs text-center z-10">
-        {/* Animated Custom Logo Spinner */}
-        <div className="relative w-16 h-16 mb-8 flex items-center justify-center">
-          {/* Pulsing Outer Glow */}
-          <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping duration-1000 opacity-75" />
-          
-          {/* Rotating Outer Ring */}
-          <div className="absolute inset-0 rounded-full border-2 border-primary/20 border-t-primary animate-spin" style={{ animationDuration: '0.8s' }} />
-          
-          {/* Center Brand Icon */}
-          <div className="w-10 h-10 rounded overflow-hidden shadow-lg transform rotate-6 hover:rotate-12 transition-transform duration-200 flex items-center justify-center bg-card">
-            <img
-              src="/verquo-icon.svg"
-              alt="Verquo Icon"
-              width={40}
-              height={40}
-              className="w-full h-full object-contain dark:hidden"
+      <div className="flex flex-col items-center max-w-xs text-center px-6">
+        {/* Wordmark */}
+        <h2 className="font-display text-2xl tracking-tight mb-6">Verquo</h2>
+
+        {/* Verification line: draws left to right, then a check tick settles at the end */}
+        <div className="relative w-40 h-6 mb-6 flex items-center">
+          <svg
+            viewBox="0 0 160 24"
+            className="w-full h-full overflow-visible"
+            aria-hidden="true"
+          >
+            {/* Track: gentle soundwave, nodding to the voice interview */}
+            <path
+              d="M4,12 C20,2 30,22 46,12 C62,2 72,22 88,12 C104,2 114,22 130,12 L140,12"
+              fill="none"
+              stroke="var(--color-border)"
+              strokeWidth="2"
+              strokeLinecap="round"
             />
-            <img
-              src="/verquo-icon-dark.svg"
-              alt="Verquo Icon"
-              width={40}
-              height={40}
-              className="w-full h-full object-contain hidden dark:block"
+            {/* Drawing progress wave */}
+            <path
+              d="M4,12 C20,2 30,22 46,12 C62,2 72,22 88,12 C104,2 114,22 130,12 L140,12"
+              fill="none"
+              stroke="var(--color-primary)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray="142"
+              strokeDashoffset="142"
+              className="animate-verquo-draw"
             />
-          </div>
+            {/* Check mark that settles in after the line completes */}
+            <path
+              d="M144 12 L150 18 L158 6"
+              fill="none"
+              stroke="var(--color-accent)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="20"
+              strokeDashoffset="20"
+              className="animate-verquo-check"
+            />
+          </svg>
         </div>
 
-        {/* Brand Name */}
-        <h2 className="font-display text-xl font-semibold mb-2 tracking-tight">Verquo</h2>
-
-        {/* Dynamic loading steps with micro-animations */}
-        <div className="h-6 overflow-hidden flex items-center justify-center">
-          <p className="text-xs text-muted-foreground font-mono animate-pulse uppercase tracking-wider transition-all duration-300">
+        {/* Status text, cross-fading between steps */}
+        <div className="h-5 flex items-center justify-center">
+          <p
+            key={stepIndex}
+            className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider animate-verquo-fade"
+          >
             {loadingSteps[stepIndex]}
           </p>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes verquo-draw {
+          0% {
+            stroke-dashoffset: 142;
+          }
+          55% {
+            stroke-dashoffset: 0;
+          }
+          100% {
+            stroke-dashoffset: 0;
+          }
+        }
+        @keyframes verquo-check {
+          0%,
+          55% {
+            stroke-dashoffset: 20;
+            opacity: 0;
+          }
+          65% {
+            opacity: 1;
+          }
+          85% {
+            stroke-dashoffset: 0;
+            opacity: 1;
+          }
+          95%,
+          100% {
+            stroke-dashoffset: 0;
+            opacity: 1;
+          }
+        }
+        @keyframes verquo-fade {
+          0% {
+            opacity: 0;
+            transform: translateY(2px);
+          }
+          15% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          85% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-2px);
+          }
+        }
+        .animate-verquo-draw {
+          animation: verquo-draw 3s ease-in-out infinite;
+        }
+        .animate-verquo-check {
+          animation: verquo-check 3s ease-in-out infinite;
+        }
+        .animate-verquo-fade {
+          animation: verquo-fade 1.5s ease-in-out;
+        }
+      `}</style>
     </div>
-  )
+  );
 }
