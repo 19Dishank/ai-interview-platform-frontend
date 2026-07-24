@@ -74,7 +74,7 @@ import { NextRequest, NextResponse } from "next/server";
 // TODO: replace with real auth check once backend is ready
 // e.g. read from cookies: const token = req.cookies.get("token")?.value;
 const token = true;
-const userRole: "candidate" | "recruiter" | "admin" = "candidate";
+const userRole: "candidate" | "recruiter" | "admin" = "admin";
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -87,18 +87,18 @@ export async function proxy(req: NextRequest) {
       pathname.startsWith("/admin")
     ) {
       const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("callbackUrl", pathname); // optional but handy
+      // loginUrl.searchParams.set("callbackUrl", pathname); // optional but handy
       return NextResponse.redirect(loginUrl);
     }
     return NextResponse.next();
   }
 
   // 2. Role-based Access Control (RBAC)
+  // Each role may only access its own section — no role, including admin,
+  // gets implicit access to another role's routes.
   const isUnauthorized =
     (pathname.startsWith("/admin") && userRole !== "admin") ||
-    (pathname.startsWith("/recruiter") &&
-      userRole !== "recruiter" &&
-      userRole !== "admin") ||
+    (pathname.startsWith("/recruiter") && userRole !== "recruiter") ||
     (pathname.startsWith("/candidate") && userRole !== "candidate");
 
   if (isUnauthorized) {
