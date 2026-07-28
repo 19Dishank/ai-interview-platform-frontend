@@ -12,41 +12,44 @@ Verquo is a premium, AI-powered technical interviewing platform designed to stre
 ## 🚀 Key Features
 
 ### 👤 Candidate Portal
-* **Interactive AI Interviewer**: A fully immersive text/voice interview environment covering React internals, performance profiling, system design, and coding challenges.
-* **Verified Assessments**: Clear timestamped evidence of problem-solving ability, communication quality, and technical depth.
-* **Profile Builder**: A custom developer profile dashboard featuring professional experience, target salary expectations, notice period, and core skill listings.
-* **History & Insights**: Comprehensive records of past attempts, score breakdown trends, and template details.
+
+- **Interactive AI Interviewer**: A fully immersive text/voice interview environment covering React internals, performance profiling, system design, and coding challenges.
+- **Verified Assessments**: Clear timestamped evidence of problem-solving ability, communication quality, and technical depth.
+- **Profile Builder**: A custom developer profile dashboard featuring professional experience, target salary expectations, notice period, and core skill listings.
+- **History & Insights**: Comprehensive records of past attempts, score breakdown trends, and template details.
 
 ### 💼 Recruiter Portal
-* **Candidate Search Engine**: Highly filterable grid/list views to locate qualified candidates by role domain (Frontend, Backend, DevOps, ML, etc.), experience levels, expected CTC, notice period, or specific technologies.
-* **Side-by-Side Comparison**: Interactively compare candidate scores, strengths, weaknesses, and key metrics in a unified comparison interface.
-* **Verified Portfolios**: Access timestamped evaluation transcripts, technical summaries, and granular performance scoring.
+
+- **Candidate Search Engine**: Highly filterable grid/list views to locate qualified candidates by role domain (Frontend, Backend, DevOps, ML, etc.), experience levels, expected CTC, notice period, or specific technologies.
+- **Side-by-Side Comparison**: Interactively compare candidate scores, strengths, weaknesses, and key metrics in a unified comparison interface.
+- **Verified Portfolios**: Access timestamped evaluation transcripts, technical summaries, and granular performance scoring.
 
 ### 🛡️ Admin Dashboard
-* **Platform Health Analytics**: Overall stats tracking candidates, recruiters, average interview scores, active jobs, and completion rates.
-* **User Management**: Moderation panel to review users, account status, and registration histories.
-* **Template Architect**: Modular interview configuration tools to adjust template duration, technology focus, and question quantity.
-* **Subscription Management**: Access control for recruiter licensing, seats, and renewal cycles.
+
+- **Platform Health Analytics**: Overall stats tracking candidates, recruiters, average interview scores, active jobs, and completion rates.
+- **User Management**: Moderation panel to review users, account status, and registration histories.
+- **Template Architect**: Modular interview configuration tools to adjust template duration, technology focus, and question quantity.
+- **Subscription Management**: Access control for recruiter licensing, seats, and renewal cycles.
 
 ---
 
 ## 🎨 Design System & Aesthetics
 
-* **Curated Harmonious Palette**: Built with a sleek dark-teal theme, amber highlighting (`var(--primary)`, `var(--success)`, `var(--accent)`), and an elegant, modern dark mode.
-* **Micro-Animations**: Custom loader animations with pinging glows, rotating rings, and hover-triggered structural transitions.
-* **Responsive Layouts**: Designed to adapt fluidly from extra-small mobile interfaces up to massive ultra-wide monitors.
-* **Seamless Dark/Light Mode**: Local storage cached theme toggling via standard Tailwind `dark:` utility directives.
+- **Curated Harmonious Palette**: Built with a sleek dark-teal theme, amber highlighting (`var(--primary)`, `var(--success)`, `var(--accent)`), and an elegant, modern dark mode.
+- **Micro-Animations**: Custom loader animations with pinging glows, rotating rings, and hover-triggered structural transitions.
+- **Responsive Layouts**: Designed to adapt fluidly from extra-small mobile interfaces up to massive ultra-wide monitors.
+- **Seamless Dark/Light Mode**: Local storage cached theme toggling via standard Tailwind `dark:` utility directives.
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Framework**: [Next.js](https://nextjs.org/) (App Router & Server-Side Rendering support)
-* **Core Library**: [React 19](https://react.dev/)
-* **Styles & Layout**: [Tailwind CSS v4](https://tailwindcss.com/) & Vanilla CSS
-* **Icons**: [Lucide React](https://lucide.dev/)
-* **Charts**: [Recharts](https://recharts.org/) (Custom data visualizations for stats and scores)
-* **UI Components**: Radix UI Primitives (Dropdowns, Select, Dialogs, Progress indicators, Sliders, and Tooltips)
+- **Framework**: [Next.js](https://nextjs.org/) (App Router & Server-Side Rendering support)
+- **Core Library**: [React 19](https://react.dev/)
+- **Styles & Layout**: [Tailwind CSS v4](https://tailwindcss.com/) & Vanilla CSS
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Charts**: [Recharts](https://recharts.org/) (Custom data visualizations for stats and scores)
+- **UI Components**: Radix UI Primitives (Dropdowns, Select, Dialogs, Progress indicators, Sliders, and Tooltips)
 
 ---
 
@@ -80,24 +83,31 @@ Verquo is a premium, AI-powered technical interviewing platform designed to stre
 First, ensure you have [Node.js](https://nodejs.org/) installed on your machine.
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Run the Development Server
+
 ```bash
 npm run dev
 ```
+
 Open [http://localhost:3000](http://localhost:3000) in your browser to view the application in action.
 
 ### 3. Build for Production
+
 To bundle the optimized production files:
+
 ```bash
 npm run build
 ```
 
 ### 4. Code Quality & Linting
+
 Run ESLint checkups:
+
 ```bash
 npm run lint
 ```
@@ -105,4 +115,5 @@ npm run lint
 ---
 
 ## 📝 License
+
 This project is licensed under the MIT License.

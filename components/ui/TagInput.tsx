@@ -1,21 +1,21 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useState } from "react";
+import { Plus, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TagInputProps {
-  label?: string
-  error?: string
-  hint?: string
-  id?: string
-  className?: string
-  placeholder?: string
-  values: string[]
-  onChange: (values: string[]) => void
-  suggestions?: string[]
+  label?: string;
+  error?: string;
+  hint?: string;
+  id?: string;
+  className?: string;
+  placeholder?: string;
+  values: string[];
+  onChange: (values: string[]) => void;
+  suggestions?: string[];
   /** Case-insensitive dedupe check + max count, since both Skills and Locations need this */
-  maxTags?: number
+  maxTags?: number;
 }
 
 function TagInput({
@@ -24,41 +24,46 @@ function TagInput({
   hint,
   id,
   className,
-  placeholder = 'Add and press Enter...',
+  placeholder = "Add and press Enter...",
   values,
   onChange,
   suggestions = [],
   maxTags,
 }: TagInputProps) {
-  const [input, setInput] = useState('')
-  const [duplicateFlash, setDuplicateFlash] = useState<string | null>(null)
-  const fieldId = id || label?.toLowerCase().replace(/\s+/g, '-')
+  const [input, setInput] = useState("");
+  const [duplicateFlash, setDuplicateFlash] = useState<string | null>(null);
+  const fieldId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
   const add = (raw: string) => {
-    const trimmed = raw.trim()
-    if (!trimmed) return
+    const trimmed = raw.trim();
+    if (!trimmed) return;
 
-    const isDuplicate = values.some((v) => v.toLowerCase() === trimmed.toLowerCase())
+    const isDuplicate = values.some(
+      (v) => v.toLowerCase() === trimmed.toLowerCase(),
+    );
     if (isDuplicate) {
-      setDuplicateFlash(trimmed)
-      setTimeout(() => setDuplicateFlash(null), 1500)
-      setInput('')
-      return
+      setDuplicateFlash(trimmed);
+      setTimeout(() => setDuplicateFlash(null), 1500);
+      setInput("");
+      return;
     }
-    if (maxTags && values.length >= maxTags) return
+    if (maxTags && values.length >= maxTags) return;
 
-    onChange([...values, trimmed])
-    setInput('')
-  }
+    onChange([...values, trimmed]);
+    setInput("");
+  };
 
-  const remove = (tag: string) => onChange(values.filter((v) => v !== tag))
+  const remove = (tag: string) => onChange(values.filter((v) => v !== tag));
 
-  const atLimit = !!maxTags && values.length >= maxTags
+  const atLimit = !!maxTags && values.length >= maxTags;
 
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
+    <div className={cn("flex flex-col gap-1.5", className)}>
       {label && (
-        <label htmlFor={fieldId} className="text-sm font-medium text-foreground">
+        <label
+          htmlFor={fieldId}
+          className="text-sm font-medium text-foreground"
+        >
           {label}
         </label>
       )}
@@ -87,16 +92,18 @@ function TagInput({
         <input
           id={fieldId}
           className={cn(
-            'flex-1 h-9 rounded-md border border-border bg-card px-3 text-sm',
-            'focus:outline-none focus:ring-2 focus:ring-ring transition-shadow duration-150',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            error && 'border-destructive focus:ring-destructive/50',
+            "flex-1 h-9 rounded-md border border-border bg-card px-3 text-sm",
+            "focus:outline-none focus:ring-2 focus:ring-ring transition-shadow duration-150",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            error && "border-destructive focus:ring-destructive/50",
           )}
           placeholder={atLimit ? `Limit of ${maxTags} reached` : placeholder}
           value={input}
           disabled={atLimit}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add(input))}
+          onKeyDown={(e) =>
+            e.key === "Enter" && (e.preventDefault(), add(input))
+          }
         />
         <button
           type="button"
@@ -109,13 +116,17 @@ function TagInput({
       </div>
 
       {duplicateFlash && (
-        <p className="text-xs text-amber-600">&ldquo;{duplicateFlash}&rdquo; is already added</p>
+        <p className="text-xs text-amber-600">
+          &ldquo;{duplicateFlash}&rdquo; is already added
+        </p>
       )}
 
       {suggestions.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {suggestions
-            .filter((s) => !values.some((v) => v.toLowerCase() === s.toLowerCase()))
+            .filter(
+              (s) => !values.some((v) => v.toLowerCase() === s.toLowerCase()),
+            )
             .map((s) => (
               <button
                 key={s}
@@ -131,9 +142,11 @@ function TagInput({
       )}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {hint && !error && !duplicateFlash && <p className="text-xs text-muted-foreground">{hint}</p>}
+      {hint && !error && !duplicateFlash && (
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      )}
     </div>
-  )
+  );
 }
 
-export { TagInput }
+export { TagInput };

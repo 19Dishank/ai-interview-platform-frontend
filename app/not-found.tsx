@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Home, Compass } from 'lucide-react'
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Home, Compass } from "lucide-react";
 
 export default function NotFound() {
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Dynamic Background Graphics */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--color-primary)/0.03,_transparent_60%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--color-accent)/0.03,_transparent_60%)] pointer-events-none" />
-      
+
       {/* Decorative Grid Lines */}
       <div className="absolute inset-0 opacity-[0.015] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
@@ -23,14 +23,19 @@ export default function NotFound() {
         </div>
 
         {/* Serif 404 Header */}
-        <h1 className="font-display text-7xl font-bold tracking-tight mb-2 text-primary">404</h1>
-        
+        <h1 className="font-display text-7xl font-bold tracking-tight mb-2 text-primary">
+          404
+        </h1>
+
         {/* Title */}
-        <h2 className="font-display text-xl font-semibold mb-3 tracking-tight">Page not found</h2>
-        
+        <h2 className="font-display text-xl font-semibold mb-3 tracking-tight">
+          Page not found
+        </h2>
+
         {/* Description */}
         <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-          The page you are looking for doesn&apos;t exist, has been moved, or you might not have authorization to view it.
+          The page you are looking for doesn&apos;t exist, has been moved, or
+          you might not have authorization to view it.
         </p>
 
         {/* CTA Buttons */}
@@ -57,5 +62,5 @@ export default function NotFound() {
         Verquo Technical Interview Platform
       </div>
     </div>
-  )
+  );
 }
