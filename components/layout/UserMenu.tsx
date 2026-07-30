@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { logout } from "@/services/auth/auth.services";
 
 interface UserMenuProps {
   userName: string;
@@ -13,7 +14,11 @@ interface UserMenuProps {
 export function UserMenu({ userName, portal }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-
+  const handleLogout = async () => {
+    setOpen(false);
+    await logout();
+    router.push("/");
+  };
   return (
     <div className="relative">
       <button
@@ -48,8 +53,7 @@ export function UserMenu({ userName, portal }: UserMenuProps) {
           <button
             type="button"
             onClick={() => {
-              setOpen(false);
-              router.push("/");
+              handleLogout();
             }}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary text-destructive transition-colors cursor-pointer"
           >

@@ -34,20 +34,20 @@ export default function Error({ error, reset }: ErrorPageProps) {
           </p>
         </div>
 
-        {error.digest && (
+        {error && (
           <p className="text-xs font-mono text-muted-foreground bg-secondary px-3 py-1.5 rounded-md">
             Error: {error.message}
           </p>
         )}
 
         <div className="flex items-center gap-3">
-          <Button
+          {/* <Button
             variant="outline"
             type="button"
             onClick={() => router.push("/")}
           >
             <Home size={16} /> Go home
-          </Button>
+          </Button> */}
           <Button variant="primary" type="button" onClick={reset}>
             <RotateCcw size={16} /> Try again
           </Button>

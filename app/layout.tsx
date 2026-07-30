@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeProvider";
+import StoreProvider from "./storeProvider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://verquo.com"),
@@ -52,7 +54,24 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>{children}</ThemeProvider>
+        <StoreProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </StoreProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            classNames: {
+              toast:
+                "bg-card text-foreground border border-border rounded-md shadow-sm font-sans",
+              title: "font-medium text-sm",
+              description: "text-muted-foreground text-xs",
+              actionButton: "bg-primary text-primary-foreground",
+              cancelButton: "bg-secondary text-secondary-foreground",
+              success: "border-success/40",
+              error: "border-destructive/40",
+            },
+          }}
+        />
       </body>
     </html>
   );

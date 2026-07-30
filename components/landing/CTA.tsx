@@ -19,7 +19,7 @@ export default function CTA() {
       <Button
         id="cta-btn-get-started"
         size="lg"
-        onClick={() => router.push("/signup")}
+        onClick={() => router.push("/continue")}
       >
         Get started — it&apos;s free <ArrowRight size={18} />
       </Button>

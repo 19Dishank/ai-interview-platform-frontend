@@ -32,7 +32,7 @@ export default function Hero() {
             <Button
               id="hero-btn-candidate"
               size="lg"
-              onClick={() => router.push("/signup?role=candidate")}
+              onClick={() => router.push("/continue?role=candidate")}
             >
               I&apos;m a candidate <ArrowRight size={18} />
             </Button>
@@ -40,7 +40,7 @@ export default function Hero() {
               id="hero-btn-recruiter"
               size="lg"
               variant="outline"
-              onClick={() => router.push("/signup?role=recruiter")}
+              onClick={() => router.push("/continue?role=recruiter")}
             >
               I hire engineers <ArrowRight size={18} />
             </Button>

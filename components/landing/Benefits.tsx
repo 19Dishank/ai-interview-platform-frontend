@@ -48,7 +48,7 @@ export default function Benefits() {
           </ul>
           <Button
             id="benefits-btn-candidate"
-            onClick={() => router.push("/signup?role=candidate")}
+            onClick={() => router.push("/continue?role=candidate")}
             className="self-start mt-auto"
           >
             Create your profile <ArrowRight size={16} />
@@ -82,7 +82,7 @@ export default function Benefits() {
           <Button
             id="benefits-btn-recruiter"
             variant="secondary"
-            onClick={() => router.push("/signup?role=recruiter")}
+            onClick={() => router.push("/continue?role=recruiter")}
             className="self-start mt-auto"
           >
             Start hiring <ArrowRight size={16} />

@@ -109,20 +109,20 @@ export function Navbar({
             <UserMenu userName={userName} portal={portal} />
           ) : !portal ? (
             <div className="flex items-center gap-2">
-              <Button
+              {/* <Button
                 id="nav-btn-signin"
                 variant="ghost"
                 size="sm"
                 onClick={() => router.push("/login")}
               >
                 Sign in
-              </Button>
+              </Button> */}
               <Button
                 id="nav-btn-getstarted"
                 size="sm"
-                onClick={() => router.push("/signup")}
+                onClick={() => router.push("/continue")}
               >
-                Get started
+                Join Us
               </Button>
             </div>
           ) : null}
