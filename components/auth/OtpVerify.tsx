@@ -3,24 +3,21 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { AuthFormTypes } from "@/types/auth-forms.types";
+import { Controller, useFormContext } from "react-hook-form";
 
 interface OtpVerifyProps {
   email: string;
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onBack: () => void;
-  otp: string;
-  setOtp: (otp: string) => void;
 }
 
-const OtpVerify = ({
-  email,
-  loading,
-  onSubmit,
-  onBack,
-  otp,
-  setOtp,
-}: OtpVerifyProps) => {
+const OtpVerify = ({ email, loading, onSubmit, onBack }: OtpVerifyProps) => {
+  const {
+    formState: { errors },
+    control,
+  } = useFormContext<AuthFormTypes>();
   return (
     <div>
       <h1 className="font-display text-2xl font-semibold text-center mb-2">
@@ -31,16 +28,21 @@ const OtpVerify = ({
         <strong className="text-foreground">{email}</strong>
       </p>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <Input
-          id="signup-input-otp"
-          label="Verification code"
-          type="text"
-          value={otp}
-          onChange={(e) => setOtp(e.target.value)}
-          placeholder="000000"
-          maxLength={6}
-          required
+        <Controller
+          name="otpVerify.otp"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              id="signup-input-otp"
+              label="Verification code"
+              type="text"
+              placeholder="000000"
+              error={errors.otpVerify?.otp?.message}
+            />
+          )}
         />
+
         <Button
           id="signup-btn-otp-continue"
           type="submit"

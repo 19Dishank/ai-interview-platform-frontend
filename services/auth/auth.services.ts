@@ -14,9 +14,11 @@ export const sendOTP = async (payload: SendOtpBody) => {
 export const verifyOTP = async (payload: VerifyOtpBody) => {
   try {
     const response = await clientApi.post("/auth/verify-otp", payload);
+
     return response.data;
   } catch (error) {
     console.error(error);
+    throw error;
   }
 };
 

@@ -6,18 +6,28 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "@/context/ThemeProvider";
 import Image from "next/image";
-import { toast } from "sonner";
 import Loading from "@/app/loading";
 import RoleSelector from "@/components/auth/RoleSelector";
 import EmailVerify from "@/components/auth/EmailVerify";
 import OtpVerify from "@/components/auth/OtpVerify";
 import { AuthSidePanel } from "@/components/auth/AuthSidePanel";
 import { sendOTP, verifyOTP } from "@/services/auth/auth.services";
+import { FormProvider, useForm } from "react-hook-form";
+import { AuthFormTypes } from "@/types/auth-forms.types";
+import { toast } from "sonner";
 
 type Role = "candidate" | "recruiter";
 type Step = "role" | "email" | "otp";
 
 function SignupForm() {
+  const methods = useForm<AuthFormTypes>({
+    defaultValues: {
+      emailVerify: { email: "" },
+      otpVerify: { otp: "" },
+    },
+  });
+  const { getValues } = methods;
+  const values = getValues();
   const router = useRouter();
   const { theme } = useTheme();
   const searchParams = useSearchParams();
@@ -36,7 +46,6 @@ function SignupForm() {
   }, [roleParam]);
 
   const [email, setEmail] = useState(emailParam);
-  const [otp, setOtp] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -63,13 +72,19 @@ function SignupForm() {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    const email = values.emailVerify.email;
     try {
-      const success = await sendOTP({ email, role });
-      if (!success) {
-        return;
+      const success = await toast.promise(sendOTP({ email, role }), {
+        loading: "Sending OTP...",
+        success: "OTP sent successfully!",
+        error: (err) => err?.message || "Failed to send OTP.",
+      });
+
+      if (success) {
+        goToStep("otp", email);
       }
-      goToStep("otp", email);
-    } catch {
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -78,22 +93,22 @@ function SignupForm() {
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    const email = values.emailVerify.email ?? emailParam;
+    const otp = values.otpVerify.otp;
+
     try {
-      const success = await verifyOTP({ email, otp, role });
-      if (!success) {
-        return;
-      }
+      const response = await verifyOTP({ email, otp, role });
+
+      if (!response) return;
+
       router.push(
-        success.data.user.role === "CANDIDATE"
+        response.data.user.role === "CANDIDATE"
           ? "/candidate/profile/build"
           : "/recruiter/search",
       );
     } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Verification failed. Please try again.",
-      );
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -123,37 +138,34 @@ function SignupForm() {
               className="h-8 w-auto object-contain"
             />
           </Link>
+          <FormProvider {...methods}>
+            {step === "role" && (
+              <RoleSelector
+                role={selectedRole}
+                setRole={setSelectedRole}
+                onContinue={handleRoleContinue}
+              />
+            )}
 
-          {step === "role" && (
-            <RoleSelector
-              role={selectedRole}
-              setRole={setSelectedRole}
-              onContinue={handleRoleContinue}
-            />
-          )}
+            {step === "email" && (
+              <EmailVerify
+                role={role}
+                loading={loading}
+                onSubmit={handleEmailSubmit}
+                onGoogleContinue={handleGoogleContinue}
+                onBack={() => goToStep("role")}
+              />
+            )}
 
-          {step === "email" && (
-            <EmailVerify
-              role={role}
-              email={email}
-              setEmail={setEmail}
-              loading={loading}
-              onSubmit={handleEmailSubmit}
-              onGoogleContinue={handleGoogleContinue}
-              onBack={() => goToStep("role")}
-            />
-          )}
-
-          {step === "otp" && (
-            <OtpVerify
-              email={emailParam || email}
-              loading={loading}
-              otp={otp}
-              setOtp={setOtp}
-              onSubmit={handleOtpSubmit}
-              onBack={() => goToStep("email")}
-            />
-          )}
+            {step === "otp" && (
+              <OtpVerify
+                email={emailParam || email}
+                loading={loading}
+                onSubmit={handleOtpSubmit}
+                onBack={() => goToStep("email")}
+              />
+            )}
+          </FormProvider>
         </div>
       </div>
     </div>

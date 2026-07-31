@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import Image from "next/image";
+import { Controller, useFormContext } from "react-hook-form";
+import { AuthFormTypes } from "@/types/auth-forms.types";
 
 type Role = "candidate" | "recruiter";
 
 interface EmailVerifyProps {
   role: Role;
-  email: string;
-  setEmail: (email: string) => void;
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onGoogleContinue: () => void;
@@ -19,13 +19,15 @@ interface EmailVerifyProps {
 
 const EmailVerify = ({
   role,
-  email,
-  setEmail,
   loading,
   onSubmit,
   onGoogleContinue,
   onBack,
 }: EmailVerifyProps) => {
+  const {
+    formState: { errors },
+    control,
+  } = useFormContext<AuthFormTypes>();
   return (
     <div>
       {/* Neutral heading — no longer assumes this is a first-time signup */}
@@ -55,15 +57,21 @@ const EmailVerify = ({
       </div>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <Input
-          id="signup-input-email"
-          label="Email"
-          type="email"
-          placeholder="you@company.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
+        <Controller
+          control={control}
+          name="emailVerify.email"
+          render={({ field }) => (
+            <Input
+              {...field}
+              id="signup-input-email"
+              label="Email"
+              type="email"
+              placeholder="you@company.com"
+              error={errors.emailVerify?.email?.message}
+            />
+          )}
         />
+
         <Button
           id="signup-btn-email-continue"
           type="submit"
