@@ -27,7 +27,18 @@ export const POST = withErrorHandler(async (req: Request) => {
     role: role.toUpperCase(),
   });
 
-  const { accessToken, refreshToken, user } = response.data.data;
+  const { accessToken, refreshToken, user } = response.data.data ?? {};
+
+  if (!accessToken || !refreshToken) {
+    console.error(
+      "[OTP auth] Unexpected backend response shape:",
+      response.data,
+    );
+    return NextResponse.json(
+      { success: false, message: "OTP verification failed. Please try again." },
+      { status: 502 },
+    );
+  }
 
   const res = NextResponse.json({
     success: response.data.success,

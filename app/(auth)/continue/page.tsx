@@ -13,7 +13,8 @@ import OtpVerify from "@/components/auth/OtpVerify";
 import { AuthSidePanel } from "@/components/auth/AuthSidePanel";
 import { sendOTP, verifyOTP } from "@/services/auth/auth.services";
 import { FormProvider, useForm } from "react-hook-form";
-import { AuthFormTypes } from "@/types/auth-forms.types";
+import { AuthFormTypes, authFormsSchema } from "@/types/auth-forms.types";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 type Role = "candidate" | "recruiter";
 type Step = "role" | "email" | "otp";
@@ -33,6 +34,7 @@ const isValidEmail = (e: string | null): boolean =>
 
 function SignupForm() {
   const methods = useForm<AuthFormTypes>({
+    resolver: zodResolver(authFormsSchema),
     defaultValues: {
       emailVerify: { email: "" },
       otpVerify: { otp: "" },
@@ -114,8 +116,11 @@ function SignupForm() {
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isValid = await methods.trigger("emailVerify.email");
+    if (!isValid) return;
+
     setLoading(true);
-    const email = values.emailVerify.email;
+    const email = getValues().emailVerify.email;
     try {
       const success = await sendOTP({ email, role });
 
@@ -131,10 +136,13 @@ function SignupForm() {
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isValid = await methods.trigger("otpVerify.otp");
+    if (!isValid) return;
+
     setLoading(true);
 
-    const email = values.emailVerify.email ?? emailParam;
-    const otp = values.otpVerify.otp;
+    const email = getValues().emailVerify.email || emailParam;
+    const otp = getValues().otpVerify.otp;
 
     try {
       const response = await verifyOTP({ email, otp, role });

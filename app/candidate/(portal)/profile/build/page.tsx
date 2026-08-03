@@ -13,8 +13,10 @@ import PreferencesForm from "@/components/candidate/profile/PreferencesForm";
 import ConnectProfilesForm from "@/components/candidate/profile/ConnectProfilesForm";
 import Stepper from "@/components/candidate/profile/layout/Stepper";
 import { FormProvider, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { DEFAULT_VALUES } from "@/constants/formDefaultValues";
 import { CandidateProfileForm } from "@/types/profile.types";
+import { candidateProfileSchema } from "@/lib/validations/profile";
 const steps = [
   { label: "Basic info", hint: "Name, photo, resume" },
   { label: "Education", hint: "Institution & degree" },
@@ -25,6 +27,7 @@ const steps = [
 
 export default function ProfileBuilder() {
   const methods = useForm<CandidateProfileForm>({
+    resolver: zodResolver(candidateProfileSchema),
     defaultValues: DEFAULT_VALUES,
   });
   const { handleSubmit } = methods;
@@ -47,6 +50,19 @@ export default function ProfileBuilder() {
   };
 
   const handleNext = async () => {
+    let isValid = false;
+
+    if (step === 0) isValid = await methods.trigger("basicInfo");
+    else if (step === 1) isValid = await methods.trigger("education");
+    else if (step === 2) {
+      const isExpValid = await methods.trigger("experience");
+      const isSkillsValid = await methods.trigger("skills");
+      isValid = isExpValid && isSkillsValid;
+    } else if (step === 3) isValid = await methods.trigger("preferences");
+    else if (step === 4) isValid = await methods.trigger("links");
+
+    if (!isValid) return;
+
     if (step < steps.length - 1) {
       setStep((s) => s + 1);
     } else {

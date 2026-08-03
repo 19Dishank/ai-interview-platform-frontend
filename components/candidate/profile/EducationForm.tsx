@@ -59,7 +59,7 @@ function dateToMonthString(date: Date | undefined): string {
 // NOTE: this only drives inline UI feedback — it isn't part of the form's
 // submit validation. If you want grade range enforced on submit, add the
 // same rule to your zod/yup schema for `education.*.grade`.
-function validateGrade(value: string, gradeType: string): string | undefined {
+function validateGrade(value: string | undefined, gradeType: string | undefined): string | undefined {
   if (!value) return undefined;
   const num = parseFloat(value);
   if (isNaN(num)) return "Enter a number";
@@ -239,7 +239,7 @@ function EducationRow({
           render={({ field }) => (
             <Select
               label="Grade type"
-              value={field.value}
+              value={field.value || ""}
               onValueChange={field.onChange}
               options={gradeTypes}
             />

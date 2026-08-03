@@ -166,7 +166,7 @@ export default function BasicInfoForm() {
           {...register("basicInfo.currentCompany")}
         />
         <Input
-          {...register("basicInfo.yearsOfExperience")}
+          {...register("basicInfo.yearsOfExperience", { valueAsNumber: true })}
           label="Years of experience"
           type="number"
           min={0}

@@ -1,54 +1,18 @@
+import { z } from "zod";
+import {
+  basicInfoSchema,
+  educationSchema,
+  experienceSchema,
+  preferencesSchema,
+  linksSchema,
+  candidateProfileSchema,
+} from "@/lib/validations/profile";
+
 export type WorkType = "full-time" | "contract" | "part-time" | "open-to-all";
 
-export interface BasicInfo {
-  firstName: string;
-  lastName: string;
-  currentTitle: string;
-  currentCompany: string;
-  yearsOfExperience: number;
-  location: string;
-  profilePhoto: File | null;
-  resume: File | null;
-}
-
-export interface Education {
-  institution: string;
-  degreeType: string;
-  fieldOfStudy: string;
-  startDate: string;
-  endDate: string;
-  currentlyPursuing: boolean;
-  gradeType: string;
-  grade: string;
-}
-
-export interface Experience {
-  jobTitle: string;
-  company: string;
-  startDate: string;
-  endDate: string;
-  currentlyWorking: boolean;
-  description: string;
-}
-
-export interface Preferences {
-  salaryExpectation: string;
-  noticePeriod: string;
-  preferredLocations: string[];
-  workType: WorkType[];
-}
-
-export interface Links {
-  github: string;
-  linkedin: string;
-  portfolio: string;
-}
-
-export interface CandidateProfileForm {
-  basicInfo: BasicInfo;
-  education: Education[];
-  experience: Experience[];
-  skills: string[];
-  preferences: Preferences;
-  links: Links;
-}
+export type BasicInfo = z.infer<typeof basicInfoSchema>;
+export type Education = z.infer<typeof educationSchema>;
+export type Experience = z.infer<typeof experienceSchema>;
+export type Preferences = z.infer<typeof preferencesSchema>;
+export type Links = z.infer<typeof linksSchema>;
+export type CandidateProfileForm = z.infer<typeof candidateProfileSchema>;

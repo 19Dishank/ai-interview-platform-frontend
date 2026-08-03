@@ -1,8 +1,2 @@
-export type AuthFormTypes = {
-  emailVerify: {
-    email: string;
-  };
-  otpVerify: {
-    otp: string;
-  };
-};
+export type { AuthFormTypes } from "@/lib/validations/auth";
+export { authFormsSchema } from "@/lib/validations/auth";
