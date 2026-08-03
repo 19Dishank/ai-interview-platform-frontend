@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { cookies } from "next/headers";
+import { Role, roleTokenMap, roleRefreshMap } from "@/lib/auth/role-cookie-map";
 
 const serverApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
@@ -9,7 +10,10 @@ const serverApi = axios.create({
 serverApi.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
+    const roleValue = cookieStore.get("user_role")?.value as Role | undefined;
+    const token = roleValue && roleTokenMap[roleValue]
+      ? cookieStore.get(roleTokenMap[roleValue])?.value
+      : undefined;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,7 +31,10 @@ serverApi.interceptors.response.use(
 
     if (status === 401) {
       const cookieStore = await cookies();
-      const refreshToken = cookieStore.get("refresh_token")?.value;
+      const roleValue = cookieStore.get("user_role")?.value as Role | undefined;
+      const refreshToken = roleValue && roleRefreshMap[roleValue]
+        ? cookieStore.get(roleRefreshMap[roleValue])?.value
+        : undefined;
       if (refreshToken) {
         try {
           const refreshRes = await axios.post(
