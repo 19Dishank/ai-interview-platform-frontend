@@ -7,9 +7,10 @@ export function setAuthCookies(
   accessToken: string,
   refreshToken: string,
 ) {
+  const isProd = process.env.NODE_ENV === "production";
   res.cookies.set(roleTokenMap[role], accessToken, {
     httpOnly: true,
-    secure: true,
+    secure: isProd,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 15, // 15 min
@@ -17,7 +18,7 @@ export function setAuthCookies(
 
   res.cookies.set(roleRefreshMap[role], refreshToken, {
     httpOnly: true,
-    secure: true,
+    secure: isProd,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -25,7 +26,7 @@ export function setAuthCookies(
 
   res.cookies.set("user_role", role, {
     httpOnly: false,
-    secure: true,
+    secure: isProd,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7,

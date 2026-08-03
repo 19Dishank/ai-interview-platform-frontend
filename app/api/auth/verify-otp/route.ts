@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withErrorHandler } from "@/services/api/handle-route";
-import { createServerAxios } from "@/services/api/server-axios";
+import serverApi from "@/services/api/server-axios";
 import { setAuthCookies } from "@/lib/set-auth-cookies";
 import { Role } from "@/lib/auth/role-cookie-map";
 
@@ -21,7 +21,6 @@ export const POST = withErrorHandler(async (req: Request) => {
     );
   }
 
-  const serverApi = await createServerAxios();
   const response = await serverApi.post("/auth/verify-otp", {
     email,
     otp,

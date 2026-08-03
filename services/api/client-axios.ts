@@ -36,36 +36,10 @@ clientApi.interceptors.response.use(
 
     // @ts-expect-error custom meta field
     const customMessage = error.config?.meta?.errorMessage;
-    const message = customMessage ?? data?.message ?? defaultMessageFor(status);
+    const message =
+      customMessage ?? data?.message ?? `Unexpected error (status ${status}).`;
 
     toast.error(message);
     return Promise.reject(error);
   },
 );
-
-function defaultMessageFor(status: number): string {
-  switch (status) {
-    case 400:
-      return "Bad request — check the submitted data.";
-    case 403:
-      return "You don't have permission to do that.";
-    case 404:
-      return "The requested resource was not found.";
-    case 408:
-      return "Request timed out. Please try again.";
-    case 409:
-      return "Conflict — this resource already exists or was modified.";
-    case 422:
-      return "Validation failed. Please check your input.";
-    case 429:
-      return "Too many requests — please slow down.";
-    case 500:
-      return "Something went wrong on our end. Please try again later.";
-    case 502:
-    case 503:
-    case 504:
-      return "Server is temporarily unavailable. Please try again shortly.";
-    default:
-      return `Unexpected error (status ${status}).`;
-  }
-}

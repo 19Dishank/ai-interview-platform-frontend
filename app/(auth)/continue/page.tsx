@@ -74,11 +74,7 @@ function SignupForm() {
     setLoading(true);
     const email = values.emailVerify.email;
     try {
-      const success = await toast.promise(sendOTP({ email, role }), {
-        loading: "Sending OTP...",
-        success: "OTP sent successfully!",
-        error: (err) => err?.message || "Failed to send OTP.",
-      });
+      const success = await sendOTP({ email, role });
 
       if (success) {
         goToStep("otp", email);

@@ -18,21 +18,34 @@ export function handleRouteError(err: unknown): NextResponse {
   const error = err as AxiosError<{ message?: string }>;
 
   if (!error.isAxiosError) {
-    console.error("Unexpected route error:", err);
+    console.error("[Next.js route error] Crashed before calling backend:", err);
     return NextResponse.json(
-      { success: false, message: "Something went wrong. Please try again." },
+      {
+        success: false,
+        message: "Something went wrong on our end. Please try again.",
+      },
       { status: 500 },
     );
   }
 
   if (!error.response) {
+    console.error(
+      "[Backend unreachable] No response from backend server:",
+      error.code, // e.g. "ECONNREFUSED", "ETIMEDOUT"
+      error.message,
+    );
     return NextResponse.json(
-      { success: false, message: "Network error — please try again." },
-      { status: 500 },
+      {
+        success: false,
+        message:
+          "Our servers are temporarily unavailable. Please try again shortly.",
+      },
+      { status: 503 },
     );
   }
 
   const { status, data } = error.response;
+  console.error("[Backend error response]", status, data);
 
   return NextResponse.json(
     {

@@ -1,5 +1,5 @@
 import { withErrorHandler } from "@/services/api/handle-route";
-import { createServerAxios } from "@/services/api/server-axios";
+import serverApi from "@/services/api/server-axios";
 import { NextResponse } from "next/server";
 
 export interface SendOtpBody {
@@ -20,8 +20,6 @@ export const POST = withErrorHandler(async (req: Request) => {
       { status: 400 },
     );
   }
-
-  const serverApi = await createServerAxios();
 
   const response = await serverApi.post("/auth/send-otp", {
     email,
