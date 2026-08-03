@@ -27,7 +27,7 @@ const OtpVerify = ({ email, loading, onSubmit, onBack }: OtpVerifyProps) => {
         We sent a 6-digit code to{" "}
         <strong className="text-foreground">{email}</strong>
       </p>
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <form noValidate onSubmit={onSubmit} className="flex flex-col gap-4">
         <Controller
           name="otpVerify.otp"
           control={control}

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeProvider";
+import { GoogleAuthProvider } from "@/context/GoogleAuthProvider";
 import StoreProvider from "./storeProvider";
-import { Toaster } from "sonner";
+import { ThemedToaster } from "@/components/layout/ThemedToaster";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://verquo.com"),
@@ -55,23 +56,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <StoreProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <GoogleAuthProvider>
+            <ThemeProvider>
+              {children}
+              <ThemedToaster />
+            </ThemeProvider>
+          </GoogleAuthProvider>
         </StoreProvider>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            classNames: {
-              toast:
-                "bg-card text-foreground border border-border rounded-md shadow-sm font-sans",
-              title: "font-medium text-sm",
-              description: "text-muted-foreground text-xs",
-              actionButton: "bg-primary text-primary-foreground",
-              cancelButton: "bg-secondary text-secondary-foreground",
-              success: "border-success/40",
-              error: "border-destructive/40",
-            },
-          }}
-        />
       </body>
     </html>
   );

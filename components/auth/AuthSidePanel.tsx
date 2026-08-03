@@ -1,4 +1,4 @@
-import { User, Briefcase, Check, ArrowLeft, Sun, Moon } from "lucide-react";
+import { User, Briefcase, Check, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/context/ThemeProvider";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -35,53 +35,44 @@ const ROLE_CONTENT: Record<
   },
 };
 
+const WAVEFORM_HEIGHTS = [
+  6, 11, 8, 17, 24, 14, 28, 19, 9, 22, 30, 16, 8, 25, 13, 20, 27, 11, 17, 7,
+];
+
 export function AuthSidePanel({ role, showRoleContext }: AuthSidePanelProps) {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const Icon = role === "candidate" ? User : Briefcase;
   const { label, headline, points } = ROLE_CONTENT[role];
+  const isCandidate = role === "candidate";
 
   return (
     <div
       className={cn(
-        "hidden md:flex flex-col justify-between h-full p-10 transition-colors duration-300",
+        "hidden md:flex flex-col justify-between h-full p-10 border-r border-border transition-colors duration-300",
         showRoleContext
-          ? role === "candidate"
+          ? isCandidate
             ? "bg-primary/5"
             : "bg-accent/5"
           : "bg-secondary",
       )}
     >
-      <div className="flex flex-col gap-8">
-        {/* Back + theme toggle row */}
-        <div className="flex items-center justify-end">
-          {/* <button
-            type="button"
-            onClick={() => router.back()}
-            aria-label="Go back"
-            className={cn(
-              "flex items-center justify-center w-9 h-9 rounded-full border border-border",
-              "text-muted-foreground hover:text-foreground hover:bg-card transition-colors cursor-pointer",
-            )}
-          >
-            <ArrowLeft size={16} />
-          </button> */}
-
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label="Toggle dark mode"
-            className={cn(
-              "flex items-center justify-center w-9 h-9 rounded-full border border-border",
-              "text-muted-foreground hover:text-foreground hover:bg-card transition-colors cursor-pointer",
-            )}
-          >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-        </div>
+      {/* Theme toggle row */}
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label="Toggle dark mode"
+          className={cn(
+            "flex items-center justify-center w-9 h-9 rounded-full border border-border",
+            "text-muted-foreground hover:text-foreground hover:bg-card transition-colors cursor-pointer",
+          )}
+        >
+          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-7 max-w-sm">
         <Image
           src={`/verquo-lockup-${theme}.svg`}
           alt="Verquo Logo"
@@ -90,11 +81,12 @@ export function AuthSidePanel({ role, showRoleContext }: AuthSidePanelProps) {
           className="h-8 w-auto object-contain cursor-pointer"
           onClick={() => router.push("/")}
         />
+
         {showRoleContext && (
           <div
             className={cn(
               "flex items-center gap-2 w-fit px-3 py-1 rounded-full text-xs font-medium",
-              role === "candidate"
+              isCandidate
                 ? "bg-primary text-primary-foreground"
                 : "bg-accent text-accent-foreground",
             )}
@@ -104,13 +96,26 @@ export function AuthSidePanel({ role, showRoleContext }: AuthSidePanelProps) {
           </div>
         )}
 
-        <h2 className="font-display text-3xl font-semibold leading-tight text-foreground">
+        <h2 className="font-display text-4xl font-semibold leading-[1.15] tracking-tight text-foreground text-balance">
           {showRoleContext
             ? headline
             : "One interview. Verified for every recruiter."}
         </h2>
 
-        <ul className="flex flex-col gap-3">
+        <div className="flex items-end gap-0.75 h-8" aria-hidden="true">
+          {WAVEFORM_HEIGHTS.map((h, i) => (
+            <span
+              key={i}
+              className={cn(
+                "w-0.75 rounded-full",
+                isCandidate ? "bg-primary" : "bg-accent",
+              )}
+              style={{ height: `${h}px`, opacity: 0.2 + (h / 30) * 0.6 }}
+            />
+          ))}
+        </div>
+
+        <ul className="flex flex-col gap-3.5">
           {(showRoleContext
             ? points
             : [
@@ -119,26 +124,30 @@ export function AuthSidePanel({ role, showRoleContext }: AuthSidePanelProps) {
                 "Skip repeating yourself in every screening call",
               ]
           ).map((point) => (
-            <li key={point} className="flex items-start gap-2.5">
+            <li key={point} className="flex items-start gap-3">
               <span
                 className={cn(
                   "flex items-center justify-center w-4 h-4 rounded-full shrink-0 mt-0.5",
-                  role === "candidate"
+                  isCandidate
                     ? "bg-primary/15 text-primary"
                     : "bg-accent/15 text-accent",
                 )}
               >
                 <Check size={10} strokeWidth={3} />
               </span>
-              <span className="text-sm text-muted-foreground">{point}</span>
+              <span className="text-sm text-muted-foreground leading-relaxed">
+                {point}
+              </span>
             </li>
           ))}
         </ul>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        &copy; {new Date().getFullYear()} Verquo. All rights reserved.
-      </p>
+      <div className="pt-6 border-t border-border">
+        <p className="font-mono text-[11px] tracking-wide text-muted-foreground">
+          &copy; {new Date().getFullYear()} VERQUO — ALL RIGHTS RESERVED
+        </p>
+      </div>
     </div>
   );
 }
