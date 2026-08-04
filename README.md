@@ -114,6 +114,12 @@ npm run lint
 
 ---
 
+## 🌿 Git Branching Strategy
+
+For complete details on our branching guidelines, branch roles (`main`, `dev`, `staging`, `feat-*`), and merge workflow, see **[BRANCHING.md](./BRANCHING.md)**.
+
+---
+
 ## 📝 License
 
 This project is licensed under the MIT License.
