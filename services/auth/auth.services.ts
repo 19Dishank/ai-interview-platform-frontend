@@ -41,3 +41,12 @@ export const logout = async () => {
     console.error(error);
   }
 };
+
+export const fetchMe = async () => {
+  try {
+    const response = await clientApi.get("/me");
+    return response.data;
+  } catch (error) {
+    console.error(error);
+  }
+};

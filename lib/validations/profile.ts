@@ -5,12 +5,6 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 export const basicInfoSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
   lastName: z.string().min(1, { message: "Last name is required" }),
-  currentTitle: z.string().min(1, { message: "Current title is required" }),
-  currentCompany: z.string().min(1, { message: "Current company is required" }),
-  yearsOfExperience: z
-    .number({ message: "Must be a number" })
-    .min(0, { message: "Must be 0 or more" })
-    .max(50, { message: "Must be 50 or less" }),
   location: z.string().min(1, { message: "Location is required" }),
   profilePhoto: z.any().optional(),
   resume: z.any().optional(),
@@ -37,16 +31,28 @@ export const experienceSchema = z.object({
 });
 
 export const preferencesSchema = z.object({
-  salaryExpectation: z.string().min(1, { message: "Salary expectation is required" }),
+  salaryExpectation: z
+    .string()
+    .min(1, { message: "Salary expectation is required" }),
   noticePeriod: z.string().min(1, { message: "Notice period is required" }),
-  preferredLocations: z.array(z.string()).min(1, { message: "Select at least one preferred location" }),
-  workType: z.array(z.enum(["full-time", "contract", "part-time", "open-to-all"])).min(1, { message: "Select at least one work type" }),
+  preferredLocations: z
+    .array(z.string())
+    .min(1, { message: "Select at least one preferred location" }),
+  workType: z
+    .array(z.enum(["full-time", "contract", "part-time", "open-to-all"]))
+    .min(1, { message: "Select at least one work type" }),
 });
 
 export const linksSchema = z.object({
   github: z.string().url({ message: "Must be a valid URL" }).or(z.literal("")),
-  linkedin: z.string().url({ message: "Must be a valid URL" }).or(z.literal("")),
-  portfolio: z.string().url({ message: "Must be a valid URL" }).or(z.literal("")),
+  linkedin: z
+    .string()
+    .url({ message: "Must be a valid URL" })
+    .or(z.literal("")),
+  portfolio: z
+    .string()
+    .url({ message: "Must be a valid URL" })
+    .or(z.literal("")),
 });
 
 export const candidateProfileSchema = z.object({

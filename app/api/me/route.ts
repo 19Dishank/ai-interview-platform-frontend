@@ -1,0 +1,17 @@
+import { withErrorHandler } from "@/services/api/handle-route";
+import serverApi from "@/services/api/server-axios";
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
+export const GET = withErrorHandler(async () => {
+  const response = await serverApi.get("/auth/me");
+
+  const user = response.data?.data ?? null;
+
+  return NextResponse.json({
+    success: response.data?.success ?? true,
+    message: response.data?.message ?? "OK",
+    data: { user },
+  });
+});

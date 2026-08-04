@@ -15,6 +15,7 @@ import { sendOTP, verifyOTP } from "@/services/auth/auth.services";
 import { FormProvider, useForm } from "react-hook-form";
 import { AuthFormTypes, authFormsSchema } from "@/types/auth-forms.types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 
 type Role = "candidate" | "recruiter";
 type Step = "role" | "email" | "otp";
@@ -35,13 +36,14 @@ const isValidEmail = (e: string | null): boolean =>
 function SignupForm() {
   const methods = useForm<AuthFormTypes>({
     resolver: zodResolver(authFormsSchema),
+    mode: "onBlur",
     defaultValues: {
       emailVerify: { email: "" },
       otpVerify: { otp: "" },
     },
   });
+
   const { getValues } = methods;
-  const values = getValues();
   const router = useRouter();
   const { theme } = useTheme();
   const searchParams = useSearchParams();
@@ -123,7 +125,7 @@ function SignupForm() {
     const email = getValues().emailVerify.email;
     try {
       const success = await sendOTP({ email, role });
-
+      toast.success(success.message);
       if (success) {
         goToStep("otp", email);
       }
@@ -195,7 +197,7 @@ function SignupForm() {
                 role={role}
                 loading={loading}
                 onSubmit={handleEmailSubmit}
-                onBack={() => goToStep("role")}
+                onBack={() => router.push("/continue")}
               />
             )}
 

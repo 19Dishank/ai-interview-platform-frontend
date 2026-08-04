@@ -9,24 +9,102 @@ const loadingSteps = [
   "Verifying session credentials",
 ];
 
-export default function Loading() {
+type LoadingMode = "fullpage" | "card";
+type LoadingSize = "default" | "sm" | "xs";
+
+interface LoadingProps {
+  mode?: LoadingMode;
+  size?: LoadingSize;
+  blurry?: boolean;
+  className?: string;
+}
+
+const sizeConfig: Record<
+  LoadingSize,
+  {
+    wordmark: string | null;
+    wave: string;
+    waveMargin: string;
+    statusText: string | null;
+    checkStroke: string;
+  }
+> = {
+  default: {
+    wordmark: "font-display text-2xl tracking-tight mb-6",
+    wave: "w-40 h-6",
+    waveMargin: "mb-6",
+    statusText:
+      "font-mono text-[11px] text-muted-foreground uppercase tracking-wider",
+    checkStroke: "2.5",
+  },
+  sm: {
+    wordmark: "font-display text-lg tracking-tight mb-4",
+    wave: "w-28 h-5",
+    waveMargin: "mb-4",
+    statusText:
+      "font-mono text-[10px] text-muted-foreground uppercase tracking-wider",
+    checkStroke: "2.5",
+  },
+  xs: {
+    wordmark: null,
+    wave: "w-16 h-3.5",
+    waveMargin: "",
+    statusText: null,
+    checkStroke: "3",
+  },
+};
+
+const modeConfig: Record<
+  LoadingMode,
+  { position: string; z: string; radius: string }
+> = {
+  fullpage: {
+    position: "fixed inset-0",
+    z: "z-50",
+    radius: "",
+  },
+  card: {
+    position: "absolute inset-0",
+    z: "z-10",
+    radius: "rounded-[inherit]",
+  },
+};
+
+export default function Loading({
+  mode = "fullpage",
+  size = "default",
+  blurry = false,
+  className = "",
+}: LoadingProps) {
   const [stepIndex, setStepIndex] = useState(0);
+  const cfg = sizeConfig[size];
+  const modeCfg = modeConfig[mode];
+  const showText = cfg.statusText !== null;
 
   useEffect(() => {
+    if (!showText) return;
     const interval = setInterval(() => {
       setStepIndex((prev) => (prev + 1) % loadingSteps.length);
     }, 1500);
     return () => clearInterval(interval);
-  }, []);
+  }, [showText]);
+
+  const backgroundClasses = blurry
+    ? "bg-background/70 backdrop-blur-sm"
+    : "bg-background";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background text-foreground transition-colors duration-300">
+    <div
+      className={`${modeCfg.position} ${modeCfg.z} ${modeCfg.radius} flex flex-col items-center justify-center ${backgroundClasses} text-foreground transition-colors duration-300 ${className}`}
+    >
       <div className="flex flex-col items-center max-w-xs text-center px-6">
         {/* Wordmark */}
-        <h2 className="font-display text-2xl tracking-tight mb-6">Verquo</h2>
+        {cfg.wordmark && <h2 className={cfg.wordmark}>Verquo</h2>}
 
         {/* Verification line: draws left to right, then a check tick settles at the end */}
-        <div className="relative w-40 h-6 mb-6 flex items-center">
+        <div
+          className={`relative ${cfg.wave} ${cfg.waveMargin} flex items-center`}
+        >
           <svg
             viewBox="0 0 160 24"
             className="w-full h-full overflow-visible"
@@ -56,7 +134,7 @@ export default function Loading() {
               d="M144 12 L150 18 L158 6"
               fill="none"
               stroke="var(--color-accent)"
-              strokeWidth="2.5"
+              strokeWidth={cfg.checkStroke}
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeDasharray="20"
@@ -67,14 +145,16 @@ export default function Loading() {
         </div>
 
         {/* Status text, cross-fading between steps */}
-        <div className="h-5 flex items-center justify-center">
-          <p
-            key={stepIndex}
-            className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider animate-verquo-fade"
-          >
-            {loadingSteps[stepIndex]}
-          </p>
-        </div>
+        {showText && (
+          <div className="h-5 flex items-center justify-center">
+            <p
+              key={stepIndex}
+              className={`${cfg.statusText} animate-verquo-fade`}
+            >
+              {loadingSteps[stepIndex]}
+            </p>
+          </div>
+        )}
       </div>
 
       <style jsx>{`

@@ -6,8 +6,6 @@ export default function CandidatePortalLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Shell portal="candidate" userName="Arjun Mehta">
-      {children}
-    </Shell>
+    <Shell>{children}</Shell>
   );
 }

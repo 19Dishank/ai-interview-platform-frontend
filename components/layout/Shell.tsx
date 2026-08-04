@@ -2,25 +2,15 @@
 
 import { type ReactNode } from "react";
 import { Navbar } from "./Navbar";
-import { useTheme } from "@/context/ThemeProvider";
 
 interface ShellProps {
   children: ReactNode;
-  portal?: "candidate" | "recruiter" | "admin" | null;
-  userName?: string;
 }
 
-export function Shell({ children, portal, userName }: ShellProps) {
-  const { theme, toggleTheme } = useTheme();
-
+export function Shell({ children }: ShellProps) {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        portal={portal}
-        userName={userName}
-      />
+      <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">{children}</main>
     </div>
   );

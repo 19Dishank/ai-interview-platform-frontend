@@ -27,7 +27,7 @@ const steps = [
 
 export default function ProfileBuilder() {
   const methods = useForm<CandidateProfileForm>({
-    resolver: zodResolver(candidateProfileSchema),
+    // resolver: zodResolver(candidateProfileSchema),
     defaultValues: DEFAULT_VALUES,
   });
   const { handleSubmit } = methods;
@@ -87,7 +87,6 @@ export default function ProfileBuilder() {
         title="Build your profile"
         subtitle="This information is shown to recruiters along with your interview report."
       />
-
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
         <FormProvider {...methods}>
           {/* Left column: vertical stepper + live preview */}

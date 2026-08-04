@@ -24,7 +24,6 @@ export const POST = withErrorHandler(async (req: Request) => {
     idToken,
     role: role.toUpperCase(),
   });
-  console.log("🚀 ~ route.ts:27 ~ response:", response);
 
   const { accessToken, refreshToken, user } = response.data.data ?? {};
 

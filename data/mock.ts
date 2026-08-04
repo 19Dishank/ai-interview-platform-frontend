@@ -3,7 +3,7 @@ import {
   InterviewHistoryItem,
   AdminStats,
   InterviewChartData,
-  User,
+  AdminMockUser,
   Plan,
   Template,
   EvidenceItem,
@@ -256,7 +256,7 @@ export const mockInterviewChartData: InterviewChartData[] = [
   { month: "Jul", interviews: 2341, candidates: 1890, recruiters: 142 },
 ];
 
-export const mockUsers: User[] = [
+export const mockUsers: AdminMockUser[] = [
   {
     id: "u1",
     name: "Arjun Mehta",

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Role, roleRefreshMap, roleTokenMap } from "./auth/role-cookie-map";
+import { Role, getRoleCookieName } from "./auth/role-cookie-map";
 
 export function setAuthCookies(
   res: NextResponse,
@@ -8,15 +8,22 @@ export function setAuthCookies(
   refreshToken: string,
 ) {
   const isProd = process.env.NODE_ENV === "production";
-  res.cookies.set(roleTokenMap[role], accessToken, {
+  const accessCookieName = getRoleCookieName(role);
+  const refreshCookieName = getRoleCookieName(role, "refresh");
+
+  if (!accessCookieName || !refreshCookieName) {
+    return;
+  }
+
+  res.cookies.set(accessCookieName, accessToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 15, // 15 min
+    maxAge: 60 * 5, // 15 min
   });
 
-  res.cookies.set(roleRefreshMap[role], refreshToken, {
+  res.cookies.set(refreshCookieName, refreshToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: "lax",

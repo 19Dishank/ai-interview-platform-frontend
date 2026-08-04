@@ -14,6 +14,16 @@ export interface InterviewChartData {
   recruiters: number;
 }
 
+export interface AdminMockUser {
+  id: string;
+  name: string | null;
+  email: string;
+  role: "candidate" | "recruiter";
+  status: "active" | "suspended";
+  joined: string;
+  interviews: number;
+}
+
 export interface Template {
   id: string;
   domain: string;

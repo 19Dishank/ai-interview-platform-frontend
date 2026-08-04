@@ -3,8 +3,8 @@ import { Shell } from "@/components/layout/Shell";
 
 export const metadata: Metadata = {
   title: {
-    default: "Recruiter Portal - Verquo",
-    template: "%s | Recruiter Portal - Verquo",
+    default: "Admin Portal - Verquo",
+    template: "%s | Admin Portal - Verquo",
   },
   robots: {
     index: false,
@@ -12,14 +12,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RecruiterLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <Shell portal="recruiter" userName="TechHire">
-      {children}
-    </Shell>
+    <Shell>{children}</Shell>
   );
 }

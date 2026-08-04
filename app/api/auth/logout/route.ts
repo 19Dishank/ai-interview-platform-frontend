@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { withErrorHandler } from "@/services/api/handle-route";
-import { Role, roleRefreshMap, roleTokenMap } from "@/lib/auth/role-cookie-map";
+import {
+  Role,
+  getRoleCookieName,
+  roleRefreshMap,
+  roleTokenMap,
+} from "@/lib/auth/role-cookie-map";
 import serverApi from "@/services/api/server-axios";
 
 export const POST = withErrorHandler(async () => {
   const cookieStore = await cookies();
   const roleValue = cookieStore.get("user_role")?.value as Role | undefined;
 
-  const refreshToken =
-    roleValue && roleRefreshMap[roleValue]
-      ? cookieStore.get(roleRefreshMap[roleValue])?.value
-      : undefined;
+  const refreshCookieName = getRoleCookieName(roleValue, "refresh");
+  const refreshToken = refreshCookieName
+    ? cookieStore.get(refreshCookieName)?.value
+    : undefined;
 
   if (refreshToken) {
     try {
@@ -23,9 +28,11 @@ export const POST = withErrorHandler(async () => {
 
   response.cookies.delete("user_role");
 
-  if (roleValue && roleTokenMap[roleValue]) {
-    response.cookies.delete(roleTokenMap[roleValue]);
-    response.cookies.delete(roleRefreshMap[roleValue]);
+  const accessCookieName = getRoleCookieName(roleValue);
+
+  if (accessCookieName && refreshCookieName) {
+    response.cookies.delete(accessCookieName);
+    response.cookies.delete(refreshCookieName);
   } else {
     Object.values(roleTokenMap).forEach((cookieName) => {
       response.cookies.delete(cookieName);

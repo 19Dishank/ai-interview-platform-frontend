@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Role, roleTokenMap } from "./lib/auth/role-cookie-map";
+import { Role, roleTokenMap, roleRefreshMap } from "./lib/auth/role-cookie-map";
 
 const ROLE_DASHBOARD: Record<Role, string> = {
   CANDIDATE: "/candidate/profile/build",
@@ -7,19 +7,20 @@ const ROLE_DASHBOARD: Record<Role, string> = {
   ADMIN: "/admin",
 };
 
-function getActiveSession(
-  req: NextRequest,
-): { role: Role; token: string } | null {
+function getActiveSession(req: NextRequest): { role: Role } | null {
   const roleCookie = req.cookies.get("user_role")?.value as Role | undefined;
 
-  if (!roleCookie || !roleTokenMap[roleCookie]) return null;
+  if (!roleCookie || !roleTokenMap[roleCookie] || !roleRefreshMap[roleCookie]) {
+    return null;
+  }
 
-  const tokenCookieName = roleTokenMap[roleCookie];
-  const token = req.cookies.get(tokenCookieName)?.value;
+  const hasAccessToken = !!req.cookies.get(roleTokenMap[roleCookie])?.value;
+  const hasRefreshToken = !!req.cookies.get(roleRefreshMap[roleCookie])?.value;
 
-  if (!token) return null;
+  if (!hasAccessToken && !hasRefreshToken) return null;
+  if (!hasRefreshToken) return null;
 
-  return { role: roleCookie, token };
+  return { role: roleCookie };
 }
 
 export function proxy(req: NextRequest) {
@@ -38,18 +39,13 @@ export function proxy(req: NextRequest) {
     pathname.startsWith("/recruiter") ||
     pathname.startsWith("/admin");
 
-  if (!isProtectedRoute) {
-    return NextResponse.next();
-  }
+  if (!isProtectedRoute) return NextResponse.next();
 
   if (!session) {
-    const loginUrl = new URL("/continue", req.url);
-    // loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/continue", req.url));
   }
 
   const routeRole = pathname.split("/")[1].toUpperCase() as Role;
-
   if (session.role !== routeRole) {
     return NextResponse.rewrite(new URL("/not-found", req.url));
   }

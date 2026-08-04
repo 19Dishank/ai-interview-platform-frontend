@@ -8,25 +8,20 @@ import { Button } from "@/components/ui/Button";
 import { UserMenu } from "./UserMenu";
 import { MobileMenu } from "./MobileMenu";
 import Image from "next/image";
-
-interface NavbarProps {
-  theme: "light" | "dark";
-  onToggleTheme: () => void;
-  portal?: "candidate" | "recruiter" | "admin" | null;
-  userName?: string;
-}
+import { useTheme } from "@/context/ThemeProvider";
+import { useAuth } from "@/context/AuthContext";
 
 const portalLinks = {
-  candidate: [
+  CANDIDATE: [
     { label: "Dashboard", href: "/candidate/dashboard" },
     { label: "My Report", href: "/candidate/report" },
     { label: "Interview History", href: "/candidate/history" },
   ],
-  recruiter: [
+  RECRUITER: [
     { label: "Find Candidates", href: "/recruiter/search" },
     { label: "Compare", href: "/recruiter/compare" },
   ],
-  admin: [
+  ADMIN: [
     { label: "Dashboard", href: "/admin/dashboard" },
     { label: "Users", href: "/admin/users" },
     { label: "Templates", href: "/admin/templates" },
@@ -34,14 +29,12 @@ const portalLinks = {
   ],
 };
 
-export function Navbar({
-  theme,
-  onToggleTheme,
-  portal,
-  userName,
-}: NavbarProps) {
+export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
+  const portal = user?.role;
   const links = portal ? portalLinks[portal] : [];
 
   return (
@@ -98,15 +91,15 @@ export function Navbar({
 
           <button
             id="nav-btn-theme-toggle"
-            onClick={onToggleTheme}
+            onClick={toggleTheme}
             className="p-2 rounded-md hover:bg-secondary transition-colors cursor-pointer"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
-          {portal && userName ? (
-            <UserMenu userName={userName} portal={portal} />
+          {portal ? (
+            <UserMenu />
           ) : !portal ? (
             <div className="flex items-center gap-2">
               {/* <Button

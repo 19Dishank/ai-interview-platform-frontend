@@ -10,9 +10,9 @@ export const clientApi = axios.create({
 
 clientApi.interceptors.response.use(
   (response) => {
-    if (response.data?.message) {
-      toast.success(response.data.message);
-    }
+    // if (response.data?.message) {
+    //   toast.success(response.data.message);
+    // }
     return response;
   },
   (error: AxiosError<{ message?: string }>) => {

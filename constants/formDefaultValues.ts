@@ -4,9 +4,6 @@ export const DEFAULT_VALUES: CandidateProfileForm = {
   basicInfo: {
     firstName: "",
     lastName: "",
-    currentTitle: "",
-    currentCompany: "",
-    yearsOfExperience: 0,
     location: "",
     profilePhoto: null,
     resume: null,

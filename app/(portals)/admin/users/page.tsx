@@ -14,11 +14,14 @@ export default function UserManagement() {
   const [users, setUsers] = useState(mockUsers);
 
   const filtered = users.filter((u) => {
+    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedName = u.name?.toLowerCase() ?? "";
+
     if (roleFilter !== "all" && u.role !== roleFilter) return false;
     if (
-      query &&
-      !u.name.toLowerCase().includes(query.toLowerCase()) &&
-      !u.email.toLowerCase().includes(query.toLowerCase())
+      normalizedQuery &&
+      !normalizedName.includes(normalizedQuery) &&
+      !u.email.toLowerCase().includes(normalizedQuery)
     )
       return false;
     return true;
@@ -94,10 +97,12 @@ export default function UserManagement() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-semibold shrink-0">
-                        {u.name[0]}
+                        {(u.name ?? u.email)[0].toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-medium">{u.name}</div>
+                        <div className="font-medium">
+                          {u.name ?? "Unnamed user"}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {u.email}
                         </div>

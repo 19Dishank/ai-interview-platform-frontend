@@ -149,31 +149,7 @@ export default function BasicInfoForm() {
           error={basicInfoErrors?.lastName?.message as string}
           {...register("basicInfo.lastName")}
         />
-        <Input
-          {...register("basicInfo.currentTitle")}
-          label="Current title"
-          defaultValue="Senior Frontend Engineer"
-          error={basicInfoErrors?.currentTitle?.message as string}
-          className="col-span-2 md:col-span-1"
-          required
-        />
-      </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Input
-          label="Current company"
-          error={basicInfoErrors?.currentCompany?.message as string}
-          {...register("basicInfo.currentCompany")}
-        />
-        <Input
-          {...register("basicInfo.yearsOfExperience", { valueAsNumber: true })}
-          label="Years of experience"
-          type="number"
-          min={0}
-          max={50}
-          defaultValue="6"
-          error={basicInfoErrors?.yearsOfExperience?.message as string}
-        />
         <Controller
           control={control}
           name="basicInfo.location"

@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/context/ThemeProvider";
 import { GoogleAuthProvider } from "@/context/GoogleAuthProvider";
 import StoreProvider from "./storeProvider";
 import { ThemedToaster } from "@/components/layout/ThemedToaster";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://verquo.com"),
@@ -56,12 +57,14 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <StoreProvider>
+          {/* <AuthProvider> */}
           <GoogleAuthProvider>
             <ThemeProvider>
               {children}
               <ThemedToaster />
             </ThemeProvider>
           </GoogleAuthProvider>
+          {/* </AuthProvider> */}
         </StoreProvider>
       </body>
     </html>
