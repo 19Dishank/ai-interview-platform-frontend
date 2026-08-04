@@ -7,7 +7,6 @@ export const basicInfoSchema = z.object({
   lastName: z.string().min(1, { message: "Last name is required" }),
   location: z.string().min(1, { message: "Location is required" }),
   profilePhoto: z.any().optional(),
-  resume: z.any().optional(),
 });
 
 export const educationSchema = z.object({
@@ -60,6 +59,7 @@ export const candidateProfileSchema = z.object({
   education: z.array(educationSchema),
   experience: z.array(experienceSchema),
   skills: z.array(z.string()).min(1, { message: "Add at least one skill" }),
+  resume: z.any().optional(),
   preferences: preferencesSchema,
   links: linksSchema,
 });

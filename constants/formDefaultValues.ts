@@ -6,7 +6,6 @@ export const DEFAULT_VALUES: CandidateProfileForm = {
     lastName: "",
     location: "",
     profilePhoto: null,
-    resume: null,
   },
 
   education: [
@@ -34,6 +33,7 @@ export const DEFAULT_VALUES: CandidateProfileForm = {
   ],
 
   skills: [],
+  resume: null,
 
   preferences: {
     salaryExpectation: "",

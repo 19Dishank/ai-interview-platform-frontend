@@ -17,11 +17,6 @@ const locationOptions = [
   "Remote",
 ];
 
-const MAX_RESUME_MB = 5;
-const ALLOWED_RESUME_TYPES = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
 const MAX_PHOTO_MB = 2;
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png"];
 
@@ -32,28 +27,9 @@ export default function BasicInfoForm() {
     formState: { errors },
   } = useFormContext<CandidateProfileForm>();
 
-  const [resumeError, setResumeError] = useState<string | undefined>();
-  const [resumeName, setResumeName] = useState<string | undefined>();
-
   const [photoPreview, setPhotoPreview] = useState<string | undefined>();
   const [photoError, setPhotoError] = useState<string | undefined>();
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const validateResume = (file: File | undefined) => {
-    if (!file) return;
-    if (!ALLOWED_RESUME_TYPES.includes(file.type)) {
-      setResumeError("Only PDF or DOCX files are supported");
-      setResumeName(undefined);
-      return false;
-    }
-    if (file.size > MAX_RESUME_MB * 1024 * 1024) {
-      setResumeError(`File is too large — max ${MAX_RESUME_MB} MB`);
-      setResumeName(undefined);
-      return false;
-    }
-    setResumeError(undefined);
-    setResumeName(file.name);
-    return true;
-  };
 
   const validatePhoto = (file: File | undefined) => {
     if (!file) return;
@@ -163,51 +139,6 @@ export default function BasicInfoForm() {
             />
           )}
         />
-      </div>
-
-      <div className="border border-dashed border-border rounded-lg p-5 flex items-center gap-4">
-        <Upload size={20} className="text-muted-foreground shrink-0" />
-        <div className="flex-1">
-          <p className="text-sm font-medium">{resumeName || "Upload resume"}</p>
-          {resumeError ? (
-            <p className="text-xs text-destructive flex items-center gap-1 mt-0.5">
-              <AlertCircle size={12} /> {resumeError}
-            </p>
-          ) : basicInfoErrors?.resume?.message ? (
-            <p className="text-xs text-destructive flex items-center gap-1 mt-0.5">
-              <AlertCircle size={12} />{" "}
-              {basicInfoErrors.resume.message as string}
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              PDF, DOCX up to {MAX_RESUME_MB} MB
-            </p>
-          )}
-        </div>
-        <Button variant="outline" size="sm" type="button" className="relative">
-          <Upload size={14} /> Choose file
-          <Controller
-            control={control}
-            name="basicInfo.resume"
-            render={({ field: { onChange, onBlur, name } }) => (
-              <input
-                name={name}
-                onBlur={onBlur}
-                type="file"
-                accept=".pdf,.docx"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (validateResume(file)) {
-                    onChange(file);
-                  } else {
-                    onChange(undefined);
-                  }
-                }}
-              />
-            )}
-          />
-        </Button>
       </div>
     </div>
   );
