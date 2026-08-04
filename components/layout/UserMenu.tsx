@@ -8,7 +8,7 @@ import { logout } from "@/services/auth/auth.services";
 import { useAuth } from "@/context/AuthContext";
 
 export function UserMenu() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const displayName = user?.name || user?.email || "User";
@@ -21,10 +21,11 @@ export function UserMenu() {
   const profilePath =
     user?.role === "CANDIDATE"
       ? "/candidate/profile/build"
-      : `/${user?.role.toLowerCase()}/profile`;
+      : `/${user?.role?.toLowerCase()}/profile`;
   const handleLogout = async () => {
     setOpen(false);
     await logout();
+    await refreshUser();
     router.push("/");
   };
   return (

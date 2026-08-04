@@ -44,9 +44,10 @@ export const logout = async () => {
 
 export const fetchMe = async () => {
   try {
-    const response = await clientApi.get("/me");
+    // @ts-expect-error custom meta field
+    const response = await clientApi.get("/me", { meta: { silent: true } });
     return response.data;
-  } catch (error) {
-    console.error(error);
+  } catch {
+    return null;
   }
 };

@@ -22,7 +22,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const res = await fetchMe();
-      setUser(res.data.user ?? null);
+      if (res && res.data) {
+        setUser(res.data.user ?? null);
+      } else {
+        setUser(null);
+      }
     } catch {
       setUser(null);
     } finally {
