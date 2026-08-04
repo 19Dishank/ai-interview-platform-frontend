@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CandidateOnboardingGuard } from "@/components/candidate/profile/CandidateOnboardingGuard";
 
 export const metadata: Metadata = {
   title: {
@@ -16,5 +17,5 @@ export default function CandidateLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <CandidateOnboardingGuard>{children}</CandidateOnboardingGuard>;
 }

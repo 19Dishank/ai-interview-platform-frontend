@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Role, roleTokenMap, roleRefreshMap } from "./lib/auth/role-cookie-map";
 
 const ROLE_DASHBOARD: Record<Role, string> = {
-  CANDIDATE: "/candidate/profile/build",
+  CANDIDATE: "/candidate/dashboard",
   RECRUITER: "/recruiter/search",
   ADMIN: "/admin",
 };

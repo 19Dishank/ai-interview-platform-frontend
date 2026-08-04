@@ -149,13 +149,15 @@ function SignupForm() {
     try {
       const response = await verifyOTP({ email, otp, role });
 
-      if (!response) return;
+      const user = response.data.user;
+      const targetPath =
+        user.role === "CANDIDATE"
+          ? user.isOnboarded
+            ? "/candidate/dashboard"
+            : "/candidate/profile/build"
+          : "/recruiter/search";
 
-      router.push(
-        response.data.user.role === "CANDIDATE"
-          ? "/candidate/profile/build"
-          : "/recruiter/search",
-      );
+      router.push(targetPath);
     } catch (err) {
       console.error(err);
     } finally {

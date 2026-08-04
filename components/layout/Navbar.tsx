@@ -35,7 +35,9 @@ export function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const portal = user?.role;
-  const links = portal ? portalLinks[portal] : [];
+  const isCandidateUnonboarded =
+    user?.role === "CANDIDATE" && (user?.isOnboarded ?? false) === false;
+  const links = portal && !isCandidateUnonboarded ? portalLinks[portal] : [];
 
   return (
     <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-sm border-b border-border">
@@ -83,7 +85,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          {portal && (
+          {portal && !isCandidateUnonboarded && (
             <span className="hidden sm:inline font-mono text-xs px-2 py-1 rounded bg-secondary text-muted-foreground uppercase tracking-wider">
               {portal}
             </span>

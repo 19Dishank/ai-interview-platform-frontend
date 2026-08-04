@@ -16,16 +16,19 @@ import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DEFAULT_VALUES } from "@/constants/formDefaultValues";
 import { CandidateProfileForm } from "@/types/profile.types";
-import { candidateProfileSchema } from "@/lib/validations/profile";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
+
 const steps = [
-  { label: "Basic info", hint: "Name, photo, resume" },
+  { label: "Basic info", hint: "Name, photo, location" },
   { label: "Education", hint: "Institution & degree" },
-  { label: "Skills & experience", hint: "Tech stack & work history" },
+  { label: "Skills & experience", hint: "Tech stack, work history & resume" },
   { label: "Preferences", hint: "Salary, notice, locations" },
   { label: "Links", hint: "GitHub, LinkedIn, portfolio" },
 ];
 
 export default function ProfileBuilder() {
+  const { user } = useAuth();
   const methods = useForm<CandidateProfileForm>({
     // resolver: zodResolver(candidateProfileSchema),
     defaultValues: DEFAULT_VALUES,
@@ -38,11 +41,10 @@ export default function ProfileBuilder() {
   const onSubmit = async (data: CandidateProfileForm) => {
     setSaving(true);
     try {
-      // await fetch("/api/candidate/profile", {
-      //   method: "POST",
-      //   body: JSON.stringify(data),
-      // });
-      console.log(data);
+      if (user) {
+        user.isOnboarded = true;
+      }
+      toast.success("Profile saved successfully!");
       router.push("/candidate/dashboard");
     } finally {
       setSaving(false);
@@ -57,7 +59,8 @@ export default function ProfileBuilder() {
     else if (step === 2) {
       const isExpValid = await methods.trigger("experience");
       const isSkillsValid = await methods.trigger("skills");
-      isValid = isExpValid && isSkillsValid;
+      const isResumeValid = await methods.trigger("resume");
+      isValid = isExpValid && isSkillsValid && isResumeValid;
     } else if (step === 3) isValid = await methods.trigger("preferences");
     else if (step === 4) isValid = await methods.trigger("links");
 
