@@ -39,6 +39,7 @@ export default function ProfileBuilder() {
   const [saving, setSaving] = useState(false);
 
   const onSubmit = async (data: CandidateProfileForm) => {
+    console.log("🚀 ~ page.tsx:42 ~ data:", data);
     setSaving(true);
     try {
       if (user) {

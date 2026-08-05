@@ -85,7 +85,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          {portal && !isCandidateUnonboarded && (
+          {portal && (
             <span className="hidden sm:inline font-mono text-xs px-2 py-1 rounded bg-secondary text-muted-foreground uppercase tracking-wider">
               {portal}
             </span>

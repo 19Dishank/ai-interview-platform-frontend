@@ -10,6 +10,7 @@ export function ThemedToaster() {
     <Toaster
       theme={theme}
       richColors
+      duration={1500}
       position="top-right"
       toastOptions={{
         classNames: {

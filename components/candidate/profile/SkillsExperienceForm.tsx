@@ -261,6 +261,7 @@ function ExperienceRow({
           name={`experience.${index}.startDate`}
           render={({ field }) => (
             <DatePicker
+              type="month"
               label="Start date"
               value={monthStringToDate(field.value)}
               onChange={(date) => field.onChange(dateToMonthString(date))}
@@ -272,6 +273,7 @@ function ExperienceRow({
           name={`experience.${index}.endDate`}
           render={({ field }) => (
             <DatePicker
+              type="month"
               label="End date"
               value={monthStringToDate(field.value)}
               onChange={(date) => field.onChange(dateToMonthString(date))}

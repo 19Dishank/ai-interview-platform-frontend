@@ -59,7 +59,10 @@ function dateToMonthString(date: Date | undefined): string {
 // NOTE: this only drives inline UI feedback — it isn't part of the form's
 // submit validation. If you want grade range enforced on submit, add the
 // same rule to your zod/yup schema for `education.*.grade`.
-function validateGrade(value: string | undefined, gradeType: string | undefined): string | undefined {
+function validateGrade(
+  value: string | undefined,
+  gradeType: string | undefined,
+): string | undefined {
   if (!value) return undefined;
   const num = parseFloat(value);
   if (isNaN(num)) return "Enter a number";
@@ -218,6 +221,7 @@ function EducationRow({
           name={`education.${index}.endDate`}
           render={({ field }) => (
             <DatePicker
+              type="month"
               label="End date"
               value={monthStringToDate(field.value)}
               onChange={(date) => field.onChange(dateToMonthString(date))}
@@ -246,7 +250,7 @@ function EducationRow({
           )}
         />
         <Input
-          label={gradeType}
+          label={gradeType || "Grade"}
           placeholder={gradeType === "Percentage" ? "e.g. 84" : "e.g. 8.4"}
           error={gradeError}
           {...register(`education.${index}.grade`)}
