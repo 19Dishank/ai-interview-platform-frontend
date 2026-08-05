@@ -35,7 +35,10 @@ export default function ProfileBuilder() {
   });
   const { handleSubmit } = methods;
   const router = useRouter();
-  const [step, setStep] = useState(0);
+
+  const initialStep = (user?.onboardingStep ?? 1) - 1;
+
+  const [step, setStep] = useState(initialStep);
   const [saving, setSaving] = useState(false);
 
   const onSubmit = async (data: CandidateProfileForm) => {
@@ -43,7 +46,7 @@ export default function ProfileBuilder() {
     setSaving(true);
     try {
       if (user) {
-        user.isOnboarded = true;
+        user.isProfileCompleted = true;
       }
       toast.success("Profile saved successfully!");
       router.push("/candidate/dashboard");
@@ -73,17 +76,6 @@ export default function ProfileBuilder() {
       handleSubmit(onSubmit)();
     }
   };
-
-  // const handleNext = () => {
-  //   if (step < steps.length - 1) setStep((s) => s + 1);
-  //   else {
-  //     setSaving(true);
-  //     setTimeout(() => {
-  //       setSaving(false);
-  //       router.push("/candidate/dashboard");
-  //     }, 1200);
-  //   }
-  // };
 
   return (
     <div className="max-w-7xl mx-auto px-4">

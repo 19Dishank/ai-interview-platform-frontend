@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import Loading from "@/app/loading";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -12,19 +13,19 @@ export function CandidateOnboardingGuard({
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const requiresOnboarding =
+    user?.role === "CANDIDATE" && !user.isProfileCompleted;
+  const isProfileBuilder = pathname === "/candidate/profile/build";
 
   useEffect(() => {
-    if (loading || !user) return;
-
-    if (user.role === "CANDIDATE") {
-      const isOnboarded = user.isOnboarded ?? false;
-
-      // If candidate has NOT completed onboarding and tries to visit any page other than /candidate/profile/build
-      if (!isOnboarded && pathname !== "/candidate/profile/build") {
-        router.replace("/candidate/profile/build");
-      }
+    if (!loading && requiresOnboarding && !isProfileBuilder) {
+      router.replace("/candidate/profile/build");
     }
-  }, [user, loading, pathname, router]);
+  }, [loading, requiresOnboarding, isProfileBuilder, router]);
+
+  if (loading || (requiresOnboarding && !isProfileBuilder)) {
+    return <Loading blurry />;
+  }
 
   return <>{children}</>;
 }

@@ -36,7 +36,7 @@ export function Navbar() {
   const { user } = useAuth();
   const portal = user?.role;
   const isCandidateUnonboarded =
-    user?.role === "CANDIDATE" && (user?.isOnboarded ?? false) === false;
+    user?.role === "CANDIDATE" && !user.isProfileCompleted;
   const links = portal && !isCandidateUnonboarded ? portalLinks[portal] : [];
 
   return (

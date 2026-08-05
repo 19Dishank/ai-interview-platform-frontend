@@ -6,5 +6,6 @@ export interface User {
   id: string;
   name: string | null;
   role: Role;
-  isOnboarded?: boolean;
+  isProfileCompleted: boolean;
+  onboardingStep: number | null;
 }

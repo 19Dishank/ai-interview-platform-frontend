@@ -152,7 +152,7 @@ function SignupForm() {
       const user = response.data.user;
       const targetPath =
         user.role === "CANDIDATE"
-          ? user.isOnboarded
+          ? user.isProfileCompleted
             ? "/candidate/dashboard"
             : "/candidate/profile/build"
           : "/recruiter/search";
