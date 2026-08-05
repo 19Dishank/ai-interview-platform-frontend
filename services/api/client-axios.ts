@@ -27,9 +27,14 @@ clientApi.interceptors.response.use(
     }
 
     const { status, data } = error.response;
+    const isSessionCheck = error.config?.url === "/me";
 
-    if (status === 401) {
-      toast.error("Session expired. Please log in again.");
+    if (status === 401 || isSessionCheck) {
+      toast.error(
+        status === 401
+          ? "Session expired. Please log in again."
+          : "We couldn't verify your session. Please log in again.",
+      );
       window.location.href = "/continue";
       return Promise.reject(error);
     }

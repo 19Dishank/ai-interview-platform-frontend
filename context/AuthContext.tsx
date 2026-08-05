@@ -22,11 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const res = await fetchMe();
-      if (res && res.data) {
-        setUser(res.data.user ?? null);
-      } else {
-        setUser(null);
-      }
+      setUser(res?.data?.user ?? null);
     } catch {
       setUser(null);
     } finally {
@@ -39,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, []);
 
-  if (loading) return <Loading blurry />;
+  if (loading || !user) return <Loading blurry />;
 
   return (
     <AuthContext.Provider

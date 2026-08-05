@@ -43,10 +43,6 @@ export const logout = async () => {
 };
 
 export const fetchMe = async () => {
-  try {
-    const response = await clientApi.get("/me");
-    return response.data;
-  } catch {
-    return null;
-  }
+  const response = await clientApi.get("/me");
+  return response.data;
 };

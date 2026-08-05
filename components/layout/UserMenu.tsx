@@ -8,7 +8,7 @@ import { logout } from "@/services/auth/auth.services";
 import { useAuth } from "@/context/AuthContext";
 
 export function UserMenu() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const displayName = user?.name || user?.email || "User";
@@ -25,7 +25,7 @@ export function UserMenu() {
   const handleLogout = async () => {
     setOpen(false);
     await logout();
-    await refreshUser();
+    // await refreshUser();
     router.push("/");
   };
   return (
