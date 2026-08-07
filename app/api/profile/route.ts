@@ -1,1 +1,2 @@
-export { dynamic, GET } from "@/app/api/candidate/profile/route";
+export const dynamic = "force-dynamic";
+export { GET } from "@/app/api/candidate/profile/route";
