@@ -11,6 +11,9 @@ import { setAuthCookies } from "@/lib/set-auth-cookies";
 const serverApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
   withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 let refreshPromise: Promise<string> | null = null;
@@ -22,6 +25,11 @@ async function performRefresh(
   const refreshRes = await axios.post(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh-token`,
     { refreshToken },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
   );
 
   const { accessToken, refreshToken: newRefreshToken } =
@@ -44,6 +52,10 @@ async function performRefresh(
 
 serverApi.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    if (!config.headers["Content-Type"]) {
+      config.headers["Content-Type"] = "application/json";
+    }
+
     const cookieStore = await cookies();
     const roleValue = cookieStore.get("user_role")?.value as Role | undefined;
     const tokenCookieName = getRoleCookieName(roleValue);

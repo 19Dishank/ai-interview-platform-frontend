@@ -9,6 +9,20 @@ const nextConfig: NextConfig = {
     "http://192.168.100.99:3000",
   ],
   reactStrictMode: false,
+  async redirects() {
+    return [
+      {
+        source: "/candidate/profile",
+        destination: "/candidate/profile/build",
+        permanent: false,
+      },
+      {
+        source: "/candidate/onboarding",
+        destination: "/candidate/profile/build",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

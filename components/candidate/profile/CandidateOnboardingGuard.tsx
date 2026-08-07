@@ -13,15 +13,19 @@ export function CandidateOnboardingGuard({
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const requiresOnboarding =
-    user?.role === "CANDIDATE" && !user.isProfileCompleted;
+
+  const isCandidate = user?.role === "CANDIDATE";
+  const requiresOnboarding = isCandidate && !user.isProfileCompleted;
+  const isProfileCompleted = isCandidate && user.isProfileCompleted;
   const isProfileBuilder = pathname === "/candidate/profile/build";
 
   useEffect(() => {
-    if (!loading && requiresOnboarding && !isProfileBuilder) {
-      router.replace("/candidate/profile/build");
+    if (!loading && isCandidate) {
+      if (requiresOnboarding && !isProfileBuilder) {
+        router.replace("/candidate/profile/build");
+      }
     }
-  }, [loading, requiresOnboarding, isProfileBuilder, router]);
+  }, [loading, isCandidate, requiresOnboarding, isProfileBuilder, router]);
 
   if (loading || (requiresOnboarding && !isProfileBuilder)) {
     return <Loading blurry />;

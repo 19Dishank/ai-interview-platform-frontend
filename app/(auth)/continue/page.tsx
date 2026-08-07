@@ -125,8 +125,8 @@ function SignupForm() {
     const email = getValues().emailVerify.email;
     try {
       const success = await sendOTP({ email, role });
-      toast.success(success.message);
       if (success) {
+        toast.success(success?.message);
         goToStep("otp", email);
       }
     } catch (error) {
