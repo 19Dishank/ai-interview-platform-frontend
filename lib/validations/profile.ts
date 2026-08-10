@@ -115,10 +115,7 @@ export const basicInfoSchema = z.object({
     .min(2, "Location is required.")
     .max(100, "Location cannot exceed 100 characters."),
 
-  avatarKey: z
-    .string({ message: "Profile photo is required." })
-    .trim()
-    .min(1, "Profile photo is required."),
+  avatarKey: z.string().trim().optional(),
 
   profilePhoto: z.any().optional(),
 
@@ -232,7 +229,7 @@ export const skillsSchema = z.object({
     )
     .min(1, "At least one skill is required.")
     .max(30, "You can add at most 30 skills."),
-  resumeKey: z.string().trim().min(1, "Resume is required."),
+  resumeKey: z.string().trim().optional(),
 });
 
 export const experienceItemSchema = z
@@ -416,7 +413,7 @@ export const candidateProfileSchema = z.object({
 
   resume: z.any().optional(),
 
-  resumeKey: z.string().trim().min(1, "Resume is required."),
+  resumeKey: z.string().trim().optional(),
 
   pendingResumeUpload: z
     .object({

@@ -27,6 +27,7 @@ export default function BasicInfoForm() {
     register,
     control,
     setValue,
+    clearErrors,
     watch,
     formState: { errors },
   } = useFormContext<CandidateProfileForm>();
@@ -98,6 +99,9 @@ export default function BasicInfoForm() {
       if (key && uploadUrl) {
         setValue("basicInfo.avatarKey", key, { shouldValidate: true });
         setValue("basicInfo.pendingUpload", { file, uploadUrl });
+        // Clear stale validation errors so the "photo required" message disappears immediately
+        clearErrors("basicInfo.avatarKey");
+        clearErrors("basicInfo.profilePhoto");
       } else {
         setPhotoError("Failed to obtain avatar upload URL.");
       }

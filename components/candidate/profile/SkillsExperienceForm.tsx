@@ -59,6 +59,7 @@ export default function SkillsExperienceForm() {
   const {
     control,
     setValue,
+    clearErrors,
     watch,
     formState: { errors },
   } = useFormContext<CandidateProfileForm>();
@@ -138,6 +139,9 @@ export default function SkillsExperienceForm() {
       if (key && uploadUrl) {
         setValue("resumeKey", key, { shouldValidate: true });
         setValue("pendingResumeUpload", { file, uploadUrl });
+        // Clear stale validation errors so the "resume required" message disappears immediately
+        clearErrors("resumeKey");
+        clearErrors("resume");
       } else {
         setResumeError("Failed to obtain resume upload URL.");
       }

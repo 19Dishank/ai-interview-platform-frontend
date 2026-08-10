@@ -136,6 +136,17 @@ function ProfileBuilderContent() {
   /** Step 0 — Basic Info */
   const handleSaveBasicInfo = useCallback(async () => {
     const isValid = await methods.trigger("basicInfo");
+
+    // Manual check for avatar — kept outside Zod so onChange never re-fires the error
+    const avatarKey = methods.getValues("basicInfo.avatarKey");
+    if (!avatarKey) {
+      methods.setError("basicInfo.avatarKey", {
+        type: "manual",
+        message: "Profile photo is required.",
+      });
+      return;
+    }
+
     if (!isValid) return;
 
     setSaving(true);
@@ -195,12 +206,22 @@ function ProfileBuilderContent() {
 
   /** Step 2 — Skills & Experience */
   const handleSaveSkillsExperience = useCallback(async () => {
-    const [isExpValid, isSkillsValid, isResumeValid] = await Promise.all([
+    const [isExpValid, isSkillsValid] = await Promise.all([
       methods.trigger("experience"),
       methods.trigger("skills"),
-      methods.trigger("resumeKey"),
     ]);
-    if (!isExpValid || !isSkillsValid || !isResumeValid) return;
+
+    // Manual check for resume — kept outside Zod so onChange never re-fires the error
+    const resumeKey = methods.getValues("resumeKey");
+    if (!resumeKey) {
+      methods.setError("resumeKey", {
+        type: "manual",
+        message: "Resume is required.",
+      });
+      return;
+    }
+
+    if (!isExpValid || !isSkillsValid) return;
 
     setSaving(true);
     try {
