@@ -33,15 +33,22 @@ export default function BasicInfoForm() {
   } = useFormContext<CandidateProfileForm>();
 
   const avatarKey = watch("basicInfo.avatarKey");
-  const [photoPreview, setPhotoPreview] = useState<string | undefined>();
+  const pendingUpload = watch("basicInfo.pendingUpload");
+  const [remoteAvatarUrl, setRemoteAvatarUrl] = useState<string | undefined>();
   const [photoError, setPhotoError] = useState<string | undefined>();
   const [gettingPresignedUrl, setGettingPresignedUrl] = useState(false);
   const [loadingAvatarUrl, setLoadingAvatarUrl] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  const localPreviewUrl = pendingUpload?.file
+    ? URL.createObjectURL(pendingUpload.file)
+    : undefined;
+
+  const photoPreview = localPreviewUrl || remoteAvatarUrl;
+
   useEffect(() => {
     let isCancelled = false;
-    if (avatarKey && !photoPreview) {
+    if (avatarKey && !localPreviewUrl && !remoteAvatarUrl) {
       queueMicrotask(() => {
         if (!isCancelled) setLoadingAvatarUrl(true);
       });
@@ -54,7 +61,7 @@ export default function BasicInfoForm() {
             resData?.avatarUrl ||
             (typeof resData === "string" ? resData : null);
           if (displayUrl) {
-            setPhotoPreview(displayUrl);
+            setRemoteAvatarUrl(displayUrl);
           }
         })
         .catch((err) => {
@@ -67,7 +74,7 @@ export default function BasicInfoForm() {
     return () => {
       isCancelled = true;
     };
-  }, [avatarKey, photoPreview]);
+  }, [avatarKey, localPreviewUrl, remoteAvatarUrl]);
 
   const handleFileSelection = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -81,9 +88,6 @@ export default function BasicInfoForm() {
     }
 
     setPhotoError(undefined);
-
-    const localUrl = URL.createObjectURL(file);
-    setPhotoPreview(localUrl);
 
     setGettingPresignedUrl(true);
     try {

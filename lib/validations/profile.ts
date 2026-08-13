@@ -115,7 +115,7 @@ export const basicInfoSchema = z.object({
     .min(2, "Location is required.")
     .max(100, "Location cannot exceed 100 characters."),
 
-  avatarKey: z.string().trim().optional(),
+  avatarKey: z.string().trim().min(1, "Profile photo is required."),
 
   profilePhoto: z.any().optional(),
 
@@ -229,7 +229,7 @@ export const skillsSchema = z.object({
     )
     .min(1, "At least one skill is required.")
     .max(30, "You can add at most 30 skills."),
-  resumeKey: z.string().trim().optional(),
+  resumeKey: z.string().trim().min(1, "Resume is required."),
 });
 
 export const experienceItemSchema = z
@@ -386,12 +386,12 @@ export const linksSchema = z.object({
   github: usernameField,
 
   linkedinUrl: optionalUrl,
-  linkedin: z.string().trim().optional().nullable(),
+  linkedin: optionalUrl,
 
   leetcodeUsername: usernameField,
 
   portfolioUrl: optionalUrl,
-  portfolio: z.string().trim().optional().nullable(),
+  portfolio: optionalUrl,
 });
 
 // ==========================================
@@ -413,7 +413,7 @@ export const candidateProfileSchema = z.object({
 
   resume: z.any().optional(),
 
-  resumeKey: z.string().trim().optional(),
+  resumeKey: z.string().trim().min(1, "Resume is required."),
 
   pendingResumeUpload: z
     .object({

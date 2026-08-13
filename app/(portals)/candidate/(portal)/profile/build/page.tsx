@@ -118,7 +118,7 @@ function ProfileBuilderContent() {
     fetchProfile();
   }, [fetchProfile, searchParams, pathname]);
 
-  // Listen for postMessage from pop-up tab or window focus
+  // Listen for postMessage from pop-up tab
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
@@ -128,24 +128,11 @@ function ProfileBuilderContent() {
       }
     };
 
-    const handleFocus = () => {
-      // Skip refetch if a file upload is pending — the file-dialog open/close
-      // causes a blur+focus cycle that would reset the form mid-upload and
-      // wipe pendingUpload / pendingResumeUpload, triggering false "Required" errors.
-      const formValues = methods.getValues();
-      const hasPendingAvatar = !!formValues.basicInfo?.pendingUpload;
-      const hasPendingResume = !!formValues.pendingResumeUpload;
-      if (hasPendingAvatar || hasPendingResume) return;
-      fetchProfile();
-    };
-
     window.addEventListener("message", handleMessage);
-    window.addEventListener("focus", handleFocus);
     return () => {
       window.removeEventListener("message", handleMessage);
-      window.removeEventListener("focus", handleFocus);
     };
-  }, [fetchProfile, methods]);
+  }, [fetchProfile]);
 
   /** Advances the step counter and unlocks the next step in one stable callback. */
   const advanceStep = useCallback(() => {
@@ -159,17 +146,6 @@ function ProfileBuilderContent() {
   /** Step 0 — Basic Info */
   const handleSaveBasicInfo = useCallback(async () => {
     const isValid = await methods.trigger("basicInfo");
-
-    // Manual check for avatar — kept outside Zod so onChange never re-fires the error
-    const avatarKey = methods.getValues("basicInfo.avatarKey");
-    if (!avatarKey) {
-      methods.setError("basicInfo.avatarKey", {
-        type: "manual",
-        message: "Profile photo is required.",
-      });
-      return;
-    }
-
     if (!isValid) return;
 
     setSaving(true);
@@ -229,22 +205,8 @@ function ProfileBuilderContent() {
 
   /** Step 2 — Skills & Experience */
   const handleSaveSkillsExperience = useCallback(async () => {
-    const [isExpValid, isSkillsValid] = await Promise.all([
-      methods.trigger("experience"),
-      methods.trigger("skills"),
-    ]);
-
-    // Manual check for resume — kept outside Zod so onChange never re-fires the error
-    const resumeKey = methods.getValues("resumeKey");
-    if (!resumeKey) {
-      methods.setError("resumeKey", {
-        type: "manual",
-        message: "Resume is required.",
-      });
-      return;
-    }
-
-    if (!isExpValid || !isSkillsValid) return;
+    const isValid = await methods.trigger(["skills", "experience", "resumeKey"]);
+    if (!isValid) return;
 
     setSaving(true);
     try {
@@ -356,6 +318,19 @@ function ProfileBuilderContent() {
     handleSaveLinks,
   ]);
 
+  /** Validates current step before jumping forward via Stepper */
+  const handleStepClick = useCallback(
+    async (targetStep: number) => {
+      if (targetStep === step) return;
+      if (targetStep < step) {
+        setStep(targetStep);
+        return;
+      }
+      await handleNext();
+    },
+    [step, handleNext],
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4">
       <PageHeader
@@ -370,6 +345,7 @@ function ProfileBuilderContent() {
             step={step}
             steps={steps}
             maxUnlockedStep={maxUnlockedStep}
+            onStepClick={handleStepClick}
           />
           {/* Right column: active form panel */}
           <Card>

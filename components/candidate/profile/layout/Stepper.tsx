@@ -14,6 +14,7 @@ type StepperPropsType = {
   setStep: (step: number) => void;
   steps: StepType[];
   maxUnlockedStep?: number;
+  onStepClick?: (targetStep: number) => void;
 };
 
 const Stepper = ({
@@ -21,6 +22,7 @@ const Stepper = ({
   setStep,
   steps,
   maxUnlockedStep = 0,
+  onStepClick,
 }: StepperPropsType) => {
   const progress = ((step + 1) / steps.length) * 100;
 
@@ -45,7 +47,14 @@ const Stepper = ({
                   key={s.label}
                   type="button"
                   disabled={!isUnlocked}
-                  onClick={() => isUnlocked && setStep(i)}
+                  onClick={() => {
+                    if (!isUnlocked) return;
+                    if (onStepClick) {
+                      onStepClick(i);
+                    } else {
+                      setStep(i);
+                    }
+                  }}
                   className={cn(
                     "flex items-start gap-3 px-3 py-2.5 rounded-md text-left transition-colors",
                     isUnlocked ? "cursor-pointer" : "cursor-not-allowed opacity-50",

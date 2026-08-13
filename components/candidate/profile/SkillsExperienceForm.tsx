@@ -65,12 +65,18 @@ export default function SkillsExperienceForm() {
   } = useFormContext<CandidateProfileForm>();
 
   const [resumeError, setResumeError] = useState<string | undefined>();
-  const [resumeName, setResumeName] = useState<string | undefined>();
   const [gettingPresignedUrl, setGettingPresignedUrl] = useState(false);
   const [loadingResumeUrl, setLoadingResumeUrl] = useState(false);
-  const [localFile, setLocalFile] = useState<File | null>(null);
 
   const existingResumeKey = watch("resumeKey");
+  const pendingResumeUpload = watch("pendingResumeUpload");
+
+  const localFile = (pendingResumeUpload?.file as File) ?? null;
+  const resumeName = localFile
+    ? localFile.name
+    : existingResumeKey
+      ? existingResumeKey.split("/").pop()
+      : undefined;
 
   const handleViewResume = async () => {
     if (localFile) {
@@ -107,16 +113,13 @@ export default function SkillsExperienceForm() {
     if (!file) return false;
     if (!ALLOWED_RESUME_TYPES.includes(file.type)) {
       setResumeError("Only PDF or DOCX files are supported");
-      setResumeName(undefined);
       return false;
     }
     if (file.size > MAX_RESUME_MB * 1024 * 1024) {
       setResumeError(`File is too large — max ${MAX_RESUME_MB} MB`);
-      setResumeName(undefined);
       return false;
     }
     setResumeError(undefined);
-    setResumeName(file.name);
     return true;
   };
 
@@ -250,7 +253,6 @@ export default function SkillsExperienceForm() {
                   const file = e.target.files?.[0];
                   if (file) {
                     onChange(file);
-                    setLocalFile(file);
                     handleResumeSelection(file);
                   } else {
                     onChange(undefined);
