@@ -35,13 +35,22 @@ export default function CandidateInterviewPage() {
     sessionId,
     transcript,
     stream,
+    isLiveMode,
+    alexSpeaking,
     startInterview,
     sendAnswer,
     endInterview,
   } = useAIInterview();
 
+  /**
+   * isAISpeaking:
+   * - In Gemini Live mode: driven by real-time `alexSpeaking` state (audio-chunk / ai-speaking-end events).
+   * - In legacy mode: heuristic based on last transcript turn role.
+   */
   const lastTurn = transcript[transcript.length - 1];
-  const isAISpeaking = status === "CONNECTED" && (!lastTurn || lastTurn.role === "AI");
+  const isAISpeaking = isLiveMode
+    ? alexSpeaking
+    : status === "CONNECTED" && (!lastTurn || lastTurn.role === "AI");
 
   const {
     register,
@@ -272,7 +281,7 @@ export default function CandidateInterviewPage() {
               status={status}
               isAISpeaking={isAISpeaking}
               aiName="Alex"
-              aiRole="Verquo AI Lead Evaluator"
+              aiRole={isLiveMode ? "Verquo AI — Gemini Live" : "Verquo AI Lead Evaluator"}
             />
           </div>
 
@@ -282,6 +291,11 @@ export default function CandidateInterviewPage() {
             <div className="p-4 border-b border-border bg-muted/40 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <Bot className="h-4 w-4 text-primary" /> Live AI Interview Log
+                {isLiveMode && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
+                    <Sparkles className="h-2.5 w-2.5" /> Gemini Live
+                  </span>
+                )}
               </div>
               <span className="text-xs text-muted-foreground">
                 {transcript.length} turns recorded
@@ -301,6 +315,8 @@ export default function CandidateInterviewPage() {
                   <p className="text-xs mt-1">
                     {status === "CONNECTING"
                       ? "Establishing secure WebSocket connection..."
+                      : isLiveMode
+                      ? "Gemini Live is active — just speak naturally. Alex will respond in real-time."
                       : "Speak or type your response below to begin."}
                   </p>
                 </div>
@@ -339,6 +355,19 @@ export default function CandidateInterviewPage() {
 
             {/* Input Bar */}
             <div className="p-3 border-t border-border bg-background flex items-center gap-2">
+              {isLiveMode && status === "CONNECTED" && (
+                <div
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                    alexSpeaking
+                      ? "bg-primary/10 text-primary border-primary/30"
+                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                  }`}
+                  title={alexSpeaking ? "Alex is speaking" : "Your mic is live — speak naturally"}
+                >
+                  <Mic className={`h-3 w-3 ${alexSpeaking ? "opacity-40" : "animate-pulse"}`} />
+                  {alexSpeaking ? "Listening..." : "Mic Live"}
+                </div>
+              )}
               <input
                 type="text"
                 value={inputText}
@@ -346,9 +375,11 @@ export default function CandidateInterviewPage() {
                 onKeyDown={handleKeyDown}
                 disabled={status !== "CONNECTED"}
                 placeholder={
-                  status === "CONNECTED"
-                    ? "Type your response here..."
-                    : "Waiting for connection..."
+                  status !== "CONNECTED"
+                    ? "Waiting for connection..."
+                    : isLiveMode
+                    ? "Or type a response to send as text..."
+                    : "Type your response here..."
                 }
                 className="flex-1 h-10 px-3 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               />
