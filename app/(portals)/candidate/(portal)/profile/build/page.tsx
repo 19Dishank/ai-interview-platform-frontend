@@ -29,7 +29,10 @@ import {
   updateLinks,
   uploadFileToS3,
 } from "@/services/candidate/candidate.services";
-import { computeProfileStepIndex } from "@/lib/helpers/profile-transformers";
+import {
+  computeProfileStepIndex,
+  transformCandidateProfile,
+} from "@/lib/helpers/profile-transformers";
 
 const steps = [
   { label: "Basic info", hint: "Name, photo, location" },
@@ -57,9 +60,22 @@ function ProfileBuilderContent() {
   const fetchProfile = useCallback(async () => {
     try {
       const res = await getCandidateProfile();
-      const profileData = res?.data ?? res;
+      const rawData = res?.data ?? res;
+      const profileData = transformCandidateProfile(rawData) ?? rawData;
       if (profileData) {
         methods.reset(profileData);
+        // Clear stale required errors for file-upload fields that already have values
+        // (reset() re-runs Zod which marks them as valid, but manual errors survive reset)
+        const avatarKey = (profileData as { basicInfo?: { avatarKey?: string } })?.basicInfo?.avatarKey;
+        const resumeKey = (profileData as { resumeKey?: string })?.resumeKey;
+        if (avatarKey) {
+          methods.clearErrors("basicInfo.avatarKey");
+          methods.clearErrors("basicInfo.profilePhoto");
+        }
+        if (resumeKey) {
+          methods.clearErrors("resumeKey");
+          methods.clearErrors("resume");
+        }
         const computed = computeProfileStepIndex(
           profileData,
           user?.onboardingStep,
@@ -113,6 +129,13 @@ function ProfileBuilderContent() {
     };
 
     const handleFocus = () => {
+      // Skip refetch if a file upload is pending — the file-dialog open/close
+      // causes a blur+focus cycle that would reset the form mid-upload and
+      // wipe pendingUpload / pendingResumeUpload, triggering false "Required" errors.
+      const formValues = methods.getValues();
+      const hasPendingAvatar = !!formValues.basicInfo?.pendingUpload;
+      const hasPendingResume = !!formValues.pendingResumeUpload;
+      if (hasPendingAvatar || hasPendingResume) return;
       fetchProfile();
     };
 
@@ -122,7 +145,7 @@ function ProfileBuilderContent() {
       window.removeEventListener("message", handleMessage);
       window.removeEventListener("focus", handleFocus);
     };
-  }, [fetchProfile]);
+  }, [fetchProfile, methods]);
 
   /** Advances the step counter and unlocks the next step in one stable callback. */
   const advanceStep = useCallback(() => {
