@@ -1,26 +1,28 @@
 "use client";
 
 import { EditableSelect } from "@/components/ui/EditableSelect";
+import { Select } from "@/components/ui/Select";
 import { TagInput } from "@/components/ui/TagInput";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { CandidateProfileForm, WorkType } from "@/types/profile.types";
 import { Controller, useFormContext } from "react-hook-form";
 
 const salaryOptions = [
-  "₹20–25 LPA",
-  "₹25–32 LPA",
-  "₹32–38 LPA",
-  "₹38–50 LPA",
-  "₹50+ LPA",
+  "₹20,00,000",
+  "₹25,00,000",
+  "₹30,00,000",
+  "₹40,00,000",
+  "₹50,00,000",
 ];
+
 const noticeOptions = [
-  "Immediate",
-  "15 days",
-  "30 days",
-  "45 days",
-  "60 days",
-  "90 days",
+  { label: "Immediate", value: "IMMEDIATE" },
+  { label: "15 days", value: "FIFTEEN_DAYS" },
+  { label: "30 days", value: "THIRTY_DAYS" },
+  { label: "60 days", value: "SIXTY_DAYS" },
+  { label: "90 days", value: "NINETY_DAYS" },
 ];
+
 const locationSuggestions = [
   "Bangalore",
   "Mumbai",
@@ -30,11 +32,14 @@ const locationSuggestions = [
   "Chennai",
   "Remote",
 ];
-const workTypes: { label: string; value: WorkType }[] = [
-  { label: "Full-time", value: "full-time" },
-  { label: "Contract", value: "contract" },
-  { label: "Part-time", value: "part-time" },
-  { label: "Open to all", value: "open-to-all" },
+
+const workTypesOptions: { label: string; value: WorkType }[] = [
+  { label: "Full-time", value: "FULL_TIME" },
+  { label: "Part-time", value: "PART_TIME" },
+  { label: "Internship", value: "INTERNSHIP" },
+  { label: "Contract", value: "CONTRACT" },
+  { label: "Freelance", value: "FREELANCE" },
+  { label: "Remote", value: "REMOTE" },
 ];
 
 export default function PreferencesForm() {
@@ -48,18 +53,17 @@ export default function PreferencesForm() {
       <h2 className="font-display text-xl font-semibold">Preferences</h2>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Both allow a custom value via "Custom..." instead of only the fixed brackets */}
         <Controller
           control={control}
-          name="preferences.salaryExpectation"
+          name="preferences.expectedSalary"
           render={({ field }) => (
             <EditableSelect
-              label="Salary expectation"
-              value={field.value}
+              label="Salary expectation (₹)"
+              value={field.value !== undefined && field.value !== null ? String(field.value) : ""}
               onChange={field.onChange}
               options={salaryOptions}
-              customPlaceholder="e.g. ₹28 LPA"
-              error={errors.preferences?.salaryExpectation?.message}
+              customPlaceholder="e.g. 2500000"
+              error={errors.preferences?.expectedSalary?.message}
             />
           )}
         />
@@ -67,12 +71,12 @@ export default function PreferencesForm() {
           control={control}
           name="preferences.noticePeriod"
           render={({ field }) => (
-            <EditableSelect
+            <Select
               label="Notice period"
-              value={field.value}
-              onChange={field.onChange}
+              value={field.value || ""}
+              onValueChange={field.onChange}
               options={noticeOptions}
-              customPlaceholder="e.g. 20 days"
+              placeholder="Select notice period..."
               error={errors.preferences?.noticePeriod?.message}
             />
           )}
@@ -86,7 +90,7 @@ export default function PreferencesForm() {
           render={({ field }) => (
             <TagInput
               label="Preferred locations"
-              values={field.value}
+              values={field.value || []}
               onChange={field.onChange}
               suggestions={locationSuggestions}
               placeholder="Add a city..."
@@ -101,29 +105,32 @@ export default function PreferencesForm() {
           <label className="text-sm font-medium">Work type</label>
           <Controller
             control={control}
-            name="preferences.workType"
-            render={({ field }) => (
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                {workTypes.map((wt) => (
-                  <Checkbox
-                    key={wt.value}
-                    label={wt.label}
-                    checked={field.value.includes(wt.value)}
-                    onCheckedChange={(checked) =>
-                      field.onChange(
-                        checked
-                          ? [...field.value, wt.value]
-                          : field.value.filter((v: WorkType) => v !== wt.value),
-                      )
-                    }
-                  />
-                ))}
-              </div>
-            )}
+            name="preferences.workTypes"
+            render={({ field }) => {
+              const currentValues = (field.value || []) as WorkType[];
+              return (
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {workTypesOptions.map((wt) => (
+                    <Checkbox
+                      key={wt.value}
+                      label={wt.label}
+                      checked={currentValues.includes(wt.value)}
+                      onCheckedChange={(checked) =>
+                        field.onChange(
+                          checked
+                            ? [...currentValues, wt.value]
+                            : currentValues.filter((v: WorkType) => v !== wt.value),
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              );
+            }}
           />
-          {errors.preferences?.workType?.message && (
+          {errors.preferences?.workTypes?.message && (
             <p className="text-xs text-destructive">
-              {errors.preferences.workType.message as string}
+              {errors.preferences.workTypes.message as string}
             </p>
           )}
         </div>

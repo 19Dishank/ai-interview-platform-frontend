@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { Role, getRoleCookieName } from "./auth/role-cookie-map";
+import {
+  Role,
+  getRoleCookieName,
+  roleRefreshMap,
+  roleTokenMap,
+} from "./auth/role-cookie-map";
 
 export function setAuthCookies(
   res: NextResponse,
@@ -37,5 +42,16 @@ export function setAuthCookies(
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
+  });
+}
+
+export function clearAuthCookies(res: NextResponse) {
+  res.cookies.delete("user_role");
+
+  Object.values(roleTokenMap).forEach((cookieName) => {
+    res.cookies.delete(cookieName);
+  });
+  Object.values(roleRefreshMap).forEach((cookieName) => {
+    res.cookies.delete(cookieName);
   });
 }

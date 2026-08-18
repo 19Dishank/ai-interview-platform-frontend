@@ -82,26 +82,38 @@ export default function ContactModal({
             />
           </a>
 
-          <a
-            href={candidate.linkedin}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-3 p-4 border border-border rounded-lg hover:border-primary/40 hover:bg-secondary/30 transition-all group"
-          >
-            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-              <Link2 size={16} />
-            </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium">LinkedIn</div>
-              <div className="text-xs text-muted-foreground truncate">
-                {candidate.linkedin.replace("https://", "")}
+          {candidate.linkedin ? (
+            <a
+              href={candidate.linkedin.startsWith("http") ? candidate.linkedin : `https://${candidate.linkedin}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 p-4 border border-border rounded-lg hover:border-primary/40 hover:bg-secondary/30 transition-all group"
+            >
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <Link2 size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium">LinkedIn</div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {candidate.linkedin.replace(/^https?:\/\//, "")}
+                </div>
+              </div>
+              <ExternalLink
+                size={14}
+                className="text-muted-foreground group-hover:text-primary shrink-0"
+              />
+            </a>
+          ) : (
+            <div className="flex items-center gap-3 p-4 border border-border/60 rounded-lg opacity-60">
+              <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground shrink-0">
+                <Link2 size={16} />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-medium">LinkedIn</div>
+                <div className="text-xs text-muted-foreground">Not provided</div>
               </div>
             </div>
-            <ExternalLink
-              size={14}
-              className="text-muted-foreground group-hover:text-primary shrink-0"
-            />
-          </a>
+          )}
         </div>
 
         <div className="p-5 pt-0">

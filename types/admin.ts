@@ -5,6 +5,12 @@ export interface AdminStats {
   activeJobs: number;
   avgScore: number;
   completionRate: number;
+  trends?: {
+    candidatesGrowth?: string;
+    recruitersGrowth?: string;
+    interviewsGrowth?: string;
+    completionRateDelta?: string;
+  };
 }
 
 export interface InterviewChartData {

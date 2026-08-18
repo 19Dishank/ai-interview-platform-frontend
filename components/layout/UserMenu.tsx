@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, User, Settings, LogOut } from "lucide-react";
@@ -8,9 +8,11 @@ import { logout } from "@/services/auth/auth.services";
 import { useAuth } from "@/context/AuthContext";
 
 export function UserMenu() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const displayName = user?.name || user?.email || "User";
   const initials = displayName
     .split(/\s+/)
@@ -22,14 +24,27 @@ export function UserMenu() {
     user?.role === "CANDIDATE"
       ? "/candidate/profile/build"
       : `/${user?.role?.toLowerCase()}/profile`;
+
   const handleLogout = async () => {
     setOpen(false);
     await logout();
-    await refreshUser();
     router.push("/");
   };
+
+  // Close when clicking outside the menu container
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-secondary text-sm transition-colors cursor-pointer"
@@ -61,9 +76,7 @@ export function UserMenu() {
           <hr className="border-border" />
           <button
             type="button"
-            onClick={() => {
-              handleLogout();
-            }}
+            onClick={handleLogout}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary text-destructive transition-colors cursor-pointer"
           >
             <LogOut size={14} />
@@ -74,3 +87,4 @@ export function UserMenu() {
     </div>
   );
 }
+

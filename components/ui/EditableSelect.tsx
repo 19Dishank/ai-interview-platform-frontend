@@ -4,12 +4,17 @@ import { useState } from "react";
 import { Select } from "./Select";
 import { Input } from "./Input";
 
+interface SelectOption {
+  label: string;
+  value: string;
+}
+
 interface EditableSelectProps {
   label?: string;
   error?: string;
   hint?: string;
   className?: string;
-  options: string[];
+  options: (string | SelectOption)[];
   value: string;
   onChange: (value: string) => void;
   customPlaceholder?: string;
@@ -33,24 +38,36 @@ function EditableSelect({
   onChange,
   customPlaceholder = "Type your own...",
 }: EditableSelectProps) {
-  const isPreset = options.includes(value);
-  const [mode, setMode] = useState<"preset" | "custom">(
-    isPreset || !value ? "preset" : "custom",
+  const normalized: SelectOption[] = options.map((o) =>
+    typeof o === "string" ? { label: o, value: o } : o,
   );
 
-  const selectValue = mode === "custom" ? CUSTOM_VALUE : value;
+  const matchedPreset = normalized.find((o) => {
+    if (o.value === value) return true;
+    if (!value) return false;
+    const cleanVal = String(value).replace(/\D/g, "");
+    const cleanOption = String(o.value).replace(/\D/g, "");
+    return Boolean(cleanVal && cleanOption && cleanVal === cleanOption);
+  });
+
+  const [userMode, setUserMode] = useState<"preset" | "custom" | null>(null);
+  const effectiveMode =
+    userMode ?? (matchedPreset || !value ? "preset" : "custom");
+
+  const selectValue =
+    effectiveMode === "custom" ? CUSTOM_VALUE : matchedPreset?.value || value;
 
   const handleSelectChange = (v: string) => {
     if (v === CUSTOM_VALUE) {
-      setMode("custom");
+      setUserMode("custom");
       onChange("");
     } else {
-      setMode("preset");
+      setUserMode("preset");
       onChange(v);
     }
   };
 
-  if (mode === "custom") {
+  if (effectiveMode === "custom") {
     return (
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
@@ -60,8 +77,8 @@ function EditableSelect({
           <button
             type="button"
             onClick={() => {
-              setMode("preset");
-              onChange(options[0]);
+              setUserMode("preset");
+              onChange(normalized[0]?.value || "");
             }}
             className="text-xs text-primary hover:underline cursor-pointer"
           >
@@ -88,7 +105,7 @@ function EditableSelect({
       className={className}
       value={selectValue}
       onValueChange={handleSelectChange}
-      options={[...options, { label: "Custom...", value: CUSTOM_VALUE }]}
+      options={[...normalized, { label: "Custom...", value: CUSTOM_VALUE }]}
     />
   );
 }

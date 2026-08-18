@@ -60,6 +60,10 @@ export default function DetailHeader({
               src={candidate.photo}
               alt={candidate.name}
               className="w-20 h-20 rounded-full object-cover border-2 border-border shrink-0"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src =
+                  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&auto=format";
+              }}
             />
             <div className="flex-1">
               <div className="flex flex-wrap items-start justify-between gap-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PlayCircle } from "lucide-react";
 import { PageHeader } from "@/components/layout/Shell";
@@ -10,8 +10,9 @@ import StatCards from "@/components/candidate/StatCards";
 import ProfileCompletion from "@/components/candidate/ProfileCompletion";
 import ActiveInterviewReport from "@/components/candidate/ActiveInterviewReport";
 import CooldownNote from "@/components/candidate/CooldownNote";
+import { getCandidateDashboard } from "@/services/candidate/candidate.services";
 
-const profileCompletionData = [
+const defaultProfileCompletion = [
   { label: "Basic info", done: true },
   { label: "Resume uploaded", done: true },
   { label: "Skills added", done: true },
@@ -23,24 +24,58 @@ const profileCompletionData = [
 export default function CandidateDashboard() {
   const router = useRouter();
   const [now] = useState(() => Date.now());
-  const latestInterview = mockInterviewHistory[0];
-  const isValid = new Date(latestInterview.validUntil).getTime() > now;
-  const daysLeft = Math.max(
-    0,
-    Math.ceil(
-      (new Date(latestInterview.validUntil).getTime() - now) /
-        (1000 * 60 * 60 * 24),
-    ),
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      try {
+        const data = await getCandidateDashboard();
+        if (isMounted && data) {
+          setDashboardData(data);
+        }
+      } catch (err) {
+        console.warn("Failed to load live dashboard data:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const latestInterview = dashboardData?.latestInterview ?? null;
+  const isValid = latestInterview?.validUntil
+    ? new Date(latestInterview.validUntil).getTime() > now
+    : false;
+
+  const daysLeft = latestInterview?.daysLeft ?? (
+    latestInterview?.validUntil
+      ? Math.max(
+          0,
+          Math.ceil(
+            (new Date(latestInterview.validUntil).getTime() - now) /
+              (1000 * 60 * 60 * 24),
+          ),
+        )
+      : undefined
   );
 
-  const doneCount = profileCompletionData.filter((p) => p.done).length;
-  const pct = Math.round((doneCount / profileCompletionData.length) * 100);
+  const checklist = dashboardData?.profileCompletion?.checklist || defaultProfileCompletion;
+  const pct = dashboardData?.profileCompletion?.percentage ?? 0;
+
+  const greetingName = dashboardData?.greetingName || "there";
+  const discoveryCount = dashboardData?.discoveryCount || 5;
+  const overallScore = latestInterview?.score ?? latestInterview?.overallScore ?? undefined;
 
   return (
     <>
       <PageHeader
         title="Dashboard"
-        subtitle="Good morning, Arjun. Your profile is being discovered by 12 recruiters this week."
+        subtitle={`Good morning, ${greetingName}. Your profile is being discovered by ${discoveryCount} recruiters this week.`}
         action={
           <Button onClick={() => router.push("/candidate/interview-setup")}>
             <PlayCircle size={16} /> Take new interview
@@ -48,11 +83,16 @@ export default function CandidateDashboard() {
         }
       />
 
-      <StatCards daysLeft={daysLeft} pct={pct} />
+      <StatCards
+        overallScore={overallScore}
+        profileViews={discoveryCount}
+        daysLeft={daysLeft}
+        pct={pct}
+      />
 
       <div className="grid lg:grid-cols-3 gap-6">
         <ProfileCompletion
-          profileCompletion={profileCompletionData}
+          profileCompletion={checklist}
           pct={pct}
         />
         <ActiveInterviewReport
@@ -61,7 +101,9 @@ export default function CandidateDashboard() {
         />
       </div>
 
-      <CooldownNote />
+      {dashboardData?.cooldown && (
+        <CooldownNote cooldown={dashboardData.cooldown} />
+      )}
     </>
   );
 }

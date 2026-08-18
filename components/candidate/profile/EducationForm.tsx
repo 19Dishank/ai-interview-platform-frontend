@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -15,62 +16,36 @@ import {
   Control,
 } from "react-hook-form";
 
-const degreeTypes = [
-  "B.Tech / B.E.",
-  "B.Sc",
-  "BCA",
-  "M.Tech / M.E.",
-  "M.Sc",
-  "MCA",
-  "MBA",
-  "PhD",
-  "Diploma",
-  "Other",
+const degreeOptions = [
+  { label: "Bachelor (B.Tech / B.E. / B.Sc / BCA)", value: "BACHELOR" },
+  { label: "Master (M.Tech / M.Sc / MCA / MBA)", value: "MASTER" },
+  { label: "PhD / Doctorate", value: "PHD" },
+  { label: "Diploma", value: "DIPLOMA" },
+  { label: "High School", value: "HIGH_SCHOOL" },
+  { label: "Other", value: "OTHER" },
 ];
-const gradeTypes = ["CGPA (10)", "CGPA (4)", "Percentage", "GPA"];
+
+const gradeOptions = [
+  { label: "CGPA", value: "CGPA" },
+  { label: "Percentage", value: "PERCENTAGE" },
+];
 
 const EMPTY_EDUCATION: Education = {
   institution: "",
-  degreeType: "B.Tech / B.E.",
+  degreeType: "BACHELOR",
   fieldOfStudy: "",
   startDate: "",
   endDate: "",
+  isCurrent: false,
   currentlyPursuing: false,
-  gradeType: "CGPA (10)",
+  gradeType: "CGPA",
   grade: "",
 };
 
-// Form stores dates as "YYYY-MM" strings; DatePicker works with Date objects.
-function monthStringToDate(value: string | undefined): Date | undefined {
-  if (!value) return undefined;
-  const [year, month] = value.split("-").map(Number);
-  if (!year || !month) return undefined;
-  return new Date(year, month - 1);
-}
-
-function dateToMonthString(date: Date | undefined): string {
-  if (!date) return "";
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-// Edge case: grade value must fit the selected scale.
-// NOTE: this only drives inline UI feedback — it isn't part of the form's
-// submit validation. If you want grade range enforced on submit, add the
-// same rule to your zod/yup schema for `education.*.grade`.
-function validateGrade(value: string | undefined, gradeType: string | undefined): string | undefined {
-  if (!value) return undefined;
-  const num = parseFloat(value);
-  if (isNaN(num)) return "Enter a number";
-  if (gradeType === "Percentage" && (num < 0 || num > 100))
-    return "Must be between 0–100";
-  if (gradeType === "CGPA (10)" && (num < 0 || num > 10))
-    return "Must be between 0–10";
-  if (gradeType === "CGPA (4)" && (num < 0 || num > 4))
-    return "Must be between 0–4";
-  return undefined;
-}
+import {
+  monthStringToDate,
+  dateToMonthString,
+} from "@/lib/helpers/profile-transformers";
 
 export default function EducationForm() {
   const { control } = useFormContext<CandidateProfileForm>();
@@ -78,6 +53,12 @@ export default function EducationForm() {
     control,
     name: "education",
   });
+
+  useEffect(() => {
+    if (fields.length === 0) {
+      append(EMPTY_EDUCATION);
+    }
+  }, [fields.length, append]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -119,34 +100,27 @@ function EducationRow({
 }) {
   const {
     register,
+    setValue,
     formState: { errors },
   } = useFormContext<CandidateProfileForm>();
   const rowErrors = errors.education?.[index];
 
-  const degreeType = useWatch({
-    control,
-    name: `education.${index}.degreeType`,
-  });
   const gradeType = useWatch({ control, name: `education.${index}.gradeType` });
-  const grade = useWatch({ control, name: `education.${index}.grade` });
-  const startDate = useWatch({ control, name: `education.${index}.startDate` });
-  const endDate = useWatch({ control, name: `education.${index}.endDate` });
-  const currentlyPursuing = useWatch({
-    control,
-    name: `education.${index}.currentlyPursuing`,
-  });
 
   const { field: currentlyPursuingField } = useController({
     control,
     name: `education.${index}.currentlyPursuing`,
   });
 
-  const gradeError =
-    validateGrade(grade, gradeType) ?? (rowErrors?.grade?.message as string);
-  const dateError =
-    startDate && endDate && !currentlyPursuing && endDate < startDate
-      ? "End date is before start date"
-      : (rowErrors?.endDate?.message as string);
+  const handleCurrentlyPursuingChange = (checked: boolean) => {
+    currentlyPursuingField.onChange(checked);
+    setValue(`education.${index}.isCurrent`, checked, { shouldValidate: true });
+    if (checked) {
+      // Clear end date and grade silently — no validation flash when toggling ON
+      setValue(`education.${index}.endDate`, null, { shouldValidate: false });
+      setValue(`education.${index}.grade`, "", { shouldValidate: false });
+    }
+  };
 
   return (
     <div className="p-5 border border-border rounded-lg flex flex-col gap-4 relative">
@@ -155,7 +129,7 @@ function EducationRow({
           variant="ghost"
           size="sm"
           type="button"
-          className="absolute top-3 right-3 text-muted-foreground hover:text-destructive"
+          className="absolute top-3 right-3 text-muted-foreground hover:text-destructive cursor-pointer"
           onClick={onRemove}
           aria-label="Remove education"
         >
@@ -177,27 +151,20 @@ function EducationRow({
           render={({ field }) => (
             <Select
               label="Degree type"
-              value={field.value}
+              value={field.value || "BACHELOR"}
               onValueChange={field.onChange}
-              options={degreeTypes}
+              options={degreeOptions}
+              error={rowErrors?.degreeType?.message as string}
             />
           )}
         />
-        {degreeType === "Other" ? (
-          <Input
-            label="Specify degree"
-            placeholder="e.g. B.Des"
-            error={rowErrors?.fieldOfStudy?.message as string}
-            {...register(`education.${index}.fieldOfStudy`)}
-          />
-        ) : (
-          <Input
-            label="Field of study"
-            placeholder="e.g. Computer Science"
-            error={rowErrors?.fieldOfStudy?.message as string}
-            {...register(`education.${index}.fieldOfStudy`)}
-          />
-        )}
+        <Input
+          label="Field of study"
+          placeholder="e.g. Computer Science"
+          error={rowErrors?.fieldOfStudy?.message as string}
+          required
+          {...register(`education.${index}.fieldOfStudy`)}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -210,6 +177,7 @@ function EducationRow({
               label="Start date"
               value={monthStringToDate(field.value)}
               onChange={(date) => field.onChange(dateToMonthString(date))}
+              error={rowErrors?.startDate?.message as string}
             />
           )}
         />
@@ -218,13 +186,14 @@ function EducationRow({
           name={`education.${index}.endDate`}
           render={({ field }) => (
             <DatePicker
+              type="month"
               label="End date"
-              value={monthStringToDate(field.value)}
+              value={monthStringToDate(field.value ?? undefined)}
               onChange={(date) => field.onChange(dateToMonthString(date))}
-              error={dateError}
+              error={rowErrors?.endDate?.message as string}
               currentToggle={{
-                checked: currentlyPursuingField.value,
-                onChange: currentlyPursuingField.onChange,
+                checked: currentlyPursuingField.value ?? false,
+                onChange: handleCurrentlyPursuingChange,
                 label: "Currently pursuing",
               }}
             />
@@ -239,16 +208,17 @@ function EducationRow({
           render={({ field }) => (
             <Select
               label="Grade type"
-              value={field.value || ""}
+              value={field.value || "CGPA"}
               onValueChange={field.onChange}
-              options={gradeTypes}
+              options={gradeOptions}
+              error={rowErrors?.gradeType?.message as string}
             />
           )}
         />
         <Input
-          label={gradeType}
-          placeholder={gradeType === "Percentage" ? "e.g. 84" : "e.g. 8.4"}
-          error={gradeError}
+          label={gradeType || "Grade"}
+          placeholder={gradeType === "PERCENTAGE" ? "e.g. 84" : "e.g. 8.4"}
+          error={rowErrors?.grade?.message as string}
           {...register(`education.${index}.grade`)}
         />
       </div>

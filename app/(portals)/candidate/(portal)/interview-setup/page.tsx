@@ -45,6 +45,17 @@ const difficulties = [
   },
 ];
 
+function mapDomainToType(domain: string): "TECHNICAL" | "FULL_STACK" | "SYSTEM_DESIGN" | "BEHAVIORAL" | "DSA" {
+  switch (domain) {
+    case "Full Stack":
+      return "FULL_STACK";
+    case "DevOps":
+      return "SYSTEM_DESIGN";
+    default:
+      return "TECHNICAL";
+  }
+}
+
 export default function InterviewSetup() {
   const router = useRouter();
   const [domain, setDomain] = useState("Frontend");
@@ -57,7 +68,20 @@ export default function InterviewSetup() {
 
   const handleStart = () => {
     setStarting(true);
-    setTimeout(() => router.push("/candidate/interview"), 1500);
+    const type = mapDomainToType(domain);
+    const targetRole = `${level} ${tech} Engineer`;
+    const diffUpper = difficulty.toUpperCase();
+
+    const params = new URLSearchParams({
+      type,
+      difficulty: diffUpper,
+      targetRole,
+      autoStart: "true",
+    });
+
+    setTimeout(() => {
+      router.push(`/candidate/interview?${params.toString()}`);
+    }, 400);
   };
 
   return (

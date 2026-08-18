@@ -1,17 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, UserCheck, UserX } from "lucide-react";
 import { PageHeader } from "@/components/layout/Shell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { mockUsers } from "@/data/mock";
 import { formatDate } from "@/lib/utils";
+import {
+  fetchAdminUsers,
+  updateAdminUserStatus,
+} from "@/services/admin/admin.services";
+import type { AdminMockUser } from "@/types";
 
 export default function UserManagement() {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<AdminMockUser[]>(mockUsers);
+  const [meta, setMeta] = useState<{ totalActive: number; totalCandidates: number; totalRecruiters: number }>({
+    totalActive: mockUsers.filter((u) => u.status === "active").length,
+    totalCandidates: mockUsers.filter((u) => u.role === "candidate").length,
+    totalRecruiters: mockUsers.filter((u) => u.role === "recruiter").length,
+  });
+
+  const loadUsers = useCallback(async () => {
+    try {
+      const res = await fetchAdminUsers({ query, role: roleFilter });
+      if (res?.users && res.users.length > 0) {
+        setUsers(res.users);
+        if (res.meta) setMeta(res.meta);
+      }
+    } catch {
+      // Fallback in place
+    }
+  }, [query, roleFilter]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const filtered = users.filter((u) => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -27,21 +53,30 @@ export default function UserManagement() {
     return true;
   });
 
-  const toggleStatus = (id: string) => {
+  const toggleStatus = async (id: string) => {
+    const targetUser = users.find((u) => u.id === id);
+    const newStatus = targetUser?.status === "active" ? "suspended" : "active";
+
     setUsers((prev) =>
       prev.map((u) =>
         u.id === id
-          ? { ...u, status: u.status === "active" ? "suspended" : "active" }
+          ? { ...u, status: newStatus }
           : u,
       ),
     );
+
+    try {
+      await updateAdminUserStatus(id, newStatus);
+    } catch {
+      // Revert if backend error
+    }
   };
 
   return (
     <>
       <PageHeader
         title="User management"
-        subtitle={`${users.filter((u) => u.status === "active").length} active · ${users.filter((u) => u.role === "candidate").length} candidates · ${users.filter((u) => u.role === "recruiter").length} recruiters`}
+        subtitle={`${meta.totalActive} active · ${meta.totalCandidates} candidates · ${meta.totalRecruiters} recruiters`}
       />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">

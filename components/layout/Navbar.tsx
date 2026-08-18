@@ -35,7 +35,9 @@ export function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const portal = user?.role;
-  const links = portal ? portalLinks[portal] : [];
+  const isCandidateUnonboarded =
+    user?.role === "CANDIDATE" && !user.isProfileCompleted;
+  const links = portal && !isCandidateUnonboarded ? portalLinks[portal] : [];
 
   return (
     <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-sm border-b border-border">

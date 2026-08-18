@@ -1,24 +1,57 @@
 "use client";
 
-import { useState } from "react";
-import { X, Star, AlertTriangle, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Star, AlertTriangle, Shield, Loader2, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/Shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { mockCandidates } from "@/data/mock";
 import Image from "next/image";
-
-const defaultSelected = ["c1", "c3", "c5"];
+import { compareCandidates, fetchCandidates } from "@/services/recruiter/recruiter.services";
+import { Candidate } from "@/types";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 export default function CandidateComparison() {
-  const [selected, setSelected] = useState<string[]>(defaultSelected);
-  const candidates = mockCandidates.filter((c) => selected.includes(c.id));
+  const [selected, setSelected] = useState<string[]>([]);
+  const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      setLoading(true);
+      try {
+        const res = await fetchCandidates();
+        const candList = res?.data?.candidates || res?.candidates || [];
+        if (isMounted && candList.length > 0) {
+          setAllCandidates(candList);
+          setSelected(candList.slice(0, Math.min(2, candList.length)).map((c: Candidate) => c.id));
+        } else if (isMounted) {
+          setAllCandidates([]);
+          setSelected([]);
+        }
+      } catch {
+        if (isMounted) {
+          setAllCandidates([]);
+          setSelected([]);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const candidates = allCandidates.filter((c) => selected.includes(c.id));
 
   const remove = (id: string) => setSelected((s) => s.filter((x) => x !== id));
   const add = (id: string) => {
     if (selected.length < 3) setSelected((s) => [...s, id]);
   };
-  const available = mockCandidates.filter((c) => !selected.includes(c.id));
+  const available = allCandidates.filter((c) => !selected.includes(c.id));
 
   const scoreColor = (s: number) =>
     s >= 85 ? "var(--success)" : s >= 65 ? "var(--primary)" : "var(--accent)";
@@ -28,6 +61,34 @@ export default function CandidateComparison() {
     { label: "Technical score", key: "technicalScore" as const },
     { label: "Communication", key: "communicationScore" as const },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-28 text-muted-foreground gap-3">
+        <Loader2 size={36} className="animate-spin text-primary" />
+        <p className="text-sm font-medium">Loading candidate comparison...</p>
+      </div>
+    );
+  }
+
+  if (allCandidates.length === 0) {
+    return (
+      <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border p-8 max-w-lg mx-auto mt-8">
+        <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
+          <Users size={24} />
+        </div>
+        <h3 className="font-semibold text-lg mb-2">No Candidates Available</h3>
+        <p className="text-sm text-muted-foreground mb-6">
+          No candidates with completed profiles or verified assessments were found in the database.
+        </p>
+        <Link href="/recruiter/search">
+          <Button variant="outline" size="sm">
+            Go to candidate search
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -70,7 +131,7 @@ export default function CandidateComparison() {
       {/* Candidate headers */}
       <div
         className="grid gap-4 mb-6"
-        style={{ gridTemplateColumns: `repeat(${candidates.length}, 1fr)` }}
+        style={{ gridTemplateColumns: `repeat(${candidates.length || 1}, 1fr)` }}
       >
         {candidates.map((c) => (
           <Card key={c.id}>
@@ -126,7 +187,7 @@ export default function CandidateComparison() {
                 <div
                   className="grid gap-3"
                   style={{
-                    gridTemplateColumns: `repeat(${candidates.length}, 1fr)`,
+                    gridTemplateColumns: `repeat(${candidates.length || 1}, 1fr)`,
                   }}
                 >
                   {candidates.map((c) => {
@@ -174,7 +235,7 @@ export default function CandidateComparison() {
       {/* Strengths / Weaknesses */}
       <div
         className="grid gap-6 mb-6"
-        style={{ gridTemplateColumns: `repeat(${candidates.length}, 1fr)` }}
+        style={{ gridTemplateColumns: `repeat(${candidates.length || 1}, 1fr)` }}
       >
         {candidates.map((c) => (
           <Card key={c.id}>
@@ -186,33 +247,45 @@ export default function CandidateComparison() {
                 <div className="flex items-center gap-1.5 text-success text-xs font-medium mb-2">
                   <Star size={12} /> Strengths
                 </div>
-                <ul className="flex flex-col gap-1">
-                  {c.strengths.map((s) => (
-                    <li
-                      key={s}
-                      className="text-xs text-muted-foreground flex items-center gap-1.5"
-                    >
-                      <div className="w-1 h-1 rounded-full bg-success shrink-0" />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
+                {c.strengths && c.strengths.length > 0 ? (
+                  <ul className="flex flex-col gap-1">
+                    {c.strengths.map((s) => (
+                      <li
+                        key={s}
+                        className="text-xs text-muted-foreground flex items-center gap-1.5"
+                      >
+                        <div className="w-1 h-1 rounded-full bg-success shrink-0" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground/70 italic">
+                    None identified in session
+                  </p>
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-1.5 text-accent text-xs font-medium mb-2">
                   <AlertTriangle size={12} /> Growth areas
                 </div>
-                <ul className="flex flex-col gap-1">
-                  {c.weaknesses.map((w) => (
-                    <li
-                      key={w}
-                      className="text-xs text-muted-foreground flex items-center gap-1.5"
-                    >
-                      <div className="w-1 h-1 rounded-full bg-accent shrink-0" />
-                      {w}
-                    </li>
-                  ))}
-                </ul>
+                {c.weaknesses && c.weaknesses.length > 0 ? (
+                  <ul className="flex flex-col gap-1">
+                    {c.weaknesses.map((w) => (
+                      <li
+                        key={w}
+                        className="text-xs text-muted-foreground flex items-center gap-1.5"
+                      >
+                        <div className="w-1 h-1 rounded-full bg-accent shrink-0" />
+                        {w}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground/70 italic">
+                    No critical growth areas flagged
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -227,7 +300,7 @@ export default function CandidateComparison() {
         <CardContent>
           <div
             className="grid gap-4"
-            style={{ gridTemplateColumns: `repeat(${candidates.length}, 1fr)` }}
+            style={{ gridTemplateColumns: `repeat(${candidates.length || 1}, 1fr)` }}
           >
             {candidates.map((c) => (
               <div

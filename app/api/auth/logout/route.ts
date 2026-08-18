@@ -4,10 +4,9 @@ import { withErrorHandler } from "@/services/api/handle-route";
 import {
   Role,
   getRoleCookieName,
-  roleRefreshMap,
-  roleTokenMap,
 } from "@/lib/auth/role-cookie-map";
 import serverApi from "@/services/api/server-axios";
+import { clearAuthCookies } from "@/lib/set-auth-cookies";
 
 export const POST = withErrorHandler(async () => {
   const cookieStore = await cookies();
@@ -26,21 +25,7 @@ export const POST = withErrorHandler(async () => {
 
   const response = NextResponse.json({ success: true });
 
-  response.cookies.delete("user_role");
-
-  const accessCookieName = getRoleCookieName(roleValue);
-
-  if (accessCookieName && refreshCookieName) {
-    response.cookies.delete(accessCookieName);
-    response.cookies.delete(refreshCookieName);
-  } else {
-    Object.values(roleTokenMap).forEach((cookieName) => {
-      response.cookies.delete(cookieName);
-    });
-    Object.values(roleRefreshMap).forEach((cookieName) => {
-      response.cookies.delete(cookieName);
-    });
-  }
+  clearAuthCookies(response);
 
   return response;
 });

@@ -125,8 +125,8 @@ function SignupForm() {
     const email = getValues().emailVerify.email;
     try {
       const success = await sendOTP({ email, role });
-      toast.success(success.message);
       if (success) {
+        toast.success(success?.message);
         goToStep("otp", email);
       }
     } catch (error) {
@@ -149,13 +149,15 @@ function SignupForm() {
     try {
       const response = await verifyOTP({ email, otp, role });
 
-      if (!response) return;
+      const user = response.data.user;
+      const targetPath =
+        user.role === "CANDIDATE"
+          ? user.isProfileCompleted
+            ? "/candidate/dashboard"
+            : "/candidate/profile/build"
+          : "/recruiter/search";
 
-      router.push(
-        response.data.user.role === "CANDIDATE"
-          ? "/candidate/profile/build"
-          : "/recruiter/search",
-      );
+      router.push(targetPath);
     } catch (err) {
       console.error(err);
     } finally {

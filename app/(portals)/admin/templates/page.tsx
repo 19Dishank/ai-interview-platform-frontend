@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, FileText } from "lucide-react";
 import { PageHeader } from "@/components/layout/Shell";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -8,6 +8,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { mockTemplates } from "@/data/mock";
 import { formatDate } from "@/lib/utils";
+import {
+  fetchAdminTemplates,
+  updateAdminTemplate,
+  deleteAdminTemplate,
+} from "@/services/admin/admin.services";
+import type { Template } from "@/types";
 
 const diffColor: Record<string, "success" | "warning" | "destructive"> = {
   Easy: "success",
@@ -16,11 +22,61 @@ const diffColor: Record<string, "success" | "warning" | "destructive"> = {
 };
 
 export default function TemplateManagement() {
-  const [templates, setTemplates] = useState(mockTemplates);
+  const [templates, setTemplates] = useState<Template[]>(mockTemplates);
   const [editing, setEditing] = useState<string | null>(null);
+  const [editQuestions, setEditQuestions] = useState<number>(24);
+  const [editDifficulty, setEditDifficulty] = useState<string>("Hard");
 
-  const remove = (id: string) =>
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      try {
+        const data = await fetchAdminTemplates();
+        if (isMounted && data && data.length > 0) {
+          setTemplates(data);
+        }
+      } catch {
+        // Fallback in place
+      }
+    }
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const remove = async (id: string) => {
     setTemplates((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await deleteAdminTemplate(id);
+    } catch {
+      // Handled gracefully
+    }
+  };
+
+  const handleSave = async (id: string) => {
+    setTemplates((prev) =>
+      prev.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              questions: editQuestions,
+              difficulty: editDifficulty as "Easy" | "Medium" | "Hard",
+              lastUpdated: new Date().toISOString().split("T")[0],
+            }
+          : t,
+      ),
+    );
+    setEditing(null);
+    try {
+      await updateAdminTemplate(id, {
+        questions: editQuestions,
+        difficulty: editDifficulty as "Easy" | "Medium" | "Hard",
+      });
+    } catch {
+      // Handled gracefully
+    }
+  };
 
   return (
     <>
@@ -48,7 +104,15 @@ export default function TemplateManagement() {
                 <div className="flex gap-1">
                   <button
                     type="button"
-                    onClick={() => setEditing(t.id === editing ? null : t.id)}
+                    onClick={() => {
+                      if (editing === t.id) {
+                        setEditing(null);
+                      } else {
+                        setEditing(t.id);
+                        setEditQuestions(t.questions);
+                        setEditDifficulty(t.difficulty);
+                      }
+                    }}
                     className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     <Edit2 size={14} />
@@ -87,14 +151,16 @@ export default function TemplateManagement() {
                     </label>
                     <input
                       type="number"
-                      defaultValue={t.questions}
+                      value={editQuestions}
+                      onChange={(e) => setEditQuestions(Number(e.target.value))}
                       className="h-8 rounded border border-border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-medium">Difficulty</label>
                     <select
-                      defaultValue={t.difficulty}
+                      value={editDifficulty}
+                      onChange={(e) => setEditDifficulty(e.target.value)}
                       className="h-8 rounded border border-border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option>Easy</option>
@@ -107,7 +173,7 @@ export default function TemplateManagement() {
                       size="sm"
                       type="button"
                       className="flex-1"
-                      onClick={() => setEditing(null)}
+                      onClick={() => handleSave(t.id)}
                     >
                       Save changes
                     </Button>
