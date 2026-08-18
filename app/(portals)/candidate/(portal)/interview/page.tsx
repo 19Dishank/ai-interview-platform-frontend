@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Video,
@@ -11,12 +12,12 @@ import {
   Square,
   Sparkles,
   CheckCircle2,
-  AlertCircle,
   Bot,
   User,
   ArrowRight,
   ShieldCheck,
   BrainCircuit,
+  ScreenShare,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/Shell";
 import { Button } from "@/components/ui/Button";
@@ -25,16 +26,26 @@ import { useAIInterview } from "@/hooks/use-ai-interview";
 import type { StartInterviewForm } from "@/types/interview.types";
 import { AIAvatar } from "@/components/candidate/AIAvatar";
 
-export default function CandidateInterviewPage() {
+function InterviewSessionContent() {
+  const searchParams = useSearchParams();
+  const queryType = searchParams.get("type") as StartInterviewForm["type"] | null;
+  const queryDiff = searchParams.get("difficulty") as StartInterviewForm["difficulty"] | null;
+  const queryRole = searchParams.get("targetRole");
+  const autoStart = searchParams.get("autoStart") === "true";
+
   const [inputText, setInputText] = useState("");
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
+  const autoStartedRef = useRef(false);
 
   const {
     status,
     sessionId,
     transcript,
     stream,
+    mediaWarning,
+    isScreenSharing,
+    toggleScreenShare,
     isLiveMode,
     alexSpeaking,
     startInterview,
@@ -42,28 +53,40 @@ export default function CandidateInterviewPage() {
     endInterview,
   } = useAIInterview();
 
-  /**
-   * isAISpeaking:
-   * - In Gemini Live mode: driven by real-time `alexSpeaking` state (audio-chunk / ai-speaking-end events).
-   * - In legacy mode: heuristic based on last transcript turn role.
-   */
   const lastTurn = transcript[transcript.length - 1];
   const isAISpeaking = isLiveMode
     ? alexSpeaking
     : status === "CONNECTED" && (!lastTurn || lastTurn.role === "AI");
 
+  const initialValues: StartInterviewForm = {
+    type: queryType || "TECHNICAL",
+    difficulty: queryDiff || "HARD",
+    targetRole: queryRole || "Senior React Engineer",
+  };
+
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<StartInterviewForm>({
     resolver: zodResolver(startInterviewSchema),
-    defaultValues: {
-      type: "TECHNICAL",
-      difficulty: "ADAPTIVE",
-      targetRole: "Full Stack Engineer",
-    },
+    defaultValues: initialValues,
   });
+
+  useEffect(() => {
+    if (queryType) setValue("type", queryType);
+    if (queryDiff) setValue("difficulty", queryDiff);
+    if (queryRole) setValue("targetRole", queryRole);
+  }, [queryType, queryDiff, queryRole, setValue]);
+
+  // Handle auto-start from interview-setup configuration
+  useEffect(() => {
+    if (autoStart && !autoStartedRef.current && status === "IDLE") {
+      autoStartedRef.current = true;
+      startInterview(initialValues);
+    }
+  }, [autoStart, status, startInterview, initialValues]);
 
   const onSubmit = async (data: StartInterviewForm) => {
     await startInterview(data);
@@ -96,7 +119,7 @@ export default function CandidateInterviewPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Top Header with Title, Subtitle, and End Interview Action Button on the same level */}
+      {/* Top Header with Title, Subtitle, and End Interview Action Button */}
       <PageHeader
         title="AI Interview Session"
         subtitle="Simulate an interactive technical interview with real-time AI feedback"
@@ -265,8 +288,28 @@ export default function CandidateInterviewPage() {
                 )}
               </div>
 
-              {/* Camera / Mic Icons */}
+              {/* Media Warning Notice if Camera is locked */}
+              {mediaWarning && (
+                <div className="absolute top-3 right-3 max-w-[240px] px-2.5 py-1 rounded-md text-[11px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30 backdrop-blur shadow-sm">
+                  {mediaWarning}
+                </div>
+              )}
+
+              {/* Camera / Mic / Screen Share Icons */}
               <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleScreenShare}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium backdrop-blur transition-colors ${
+                    isScreenSharing
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-black/60 text-white/90 hover:bg-black/80"
+                  }`}
+                  title={isScreenSharing ? "Switch back to camera" : "Share / Record Screen"}
+                >
+                  <ScreenShare className="h-3.5 w-3.5" />
+                  <span>{isScreenSharing ? "Screen Active" : "Share Screen"}</span>
+                </button>
                 <div className="p-1.5 rounded-md bg-black/60 text-white/90">
                   <Video className="h-3.5 w-3.5" />
                 </div>
@@ -276,7 +319,7 @@ export default function CandidateInterviewPage() {
               </div>
             </div>
 
-            {/* Rectangular AI Avatar Card (placed directly below the video display) */}
+            {/* Rectangular AI Avatar Card */}
             <AIAvatar
               status={status}
               isAISpeaking={isAISpeaking}
@@ -423,5 +466,13 @@ export default function CandidateInterviewPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CandidateInterviewPage() {
+  return (
+    <Suspense fallback={null}>
+      <InterviewSessionContent />
+    </Suspense>
   );
 }

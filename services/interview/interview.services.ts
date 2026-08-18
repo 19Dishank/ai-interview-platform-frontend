@@ -45,3 +45,21 @@ export const fetchInterviewRecording = async (
   const response = await clientApi.get(`/interview/${id}/recording`);
   return response.data.data;
 };
+
+export const fetchInterviewRecordingUploadUrl = async (
+  id: string,
+  contentType = "video/webm"
+): Promise<{ sessionId: string; key: string; uploadUrl: string }> => {
+  const response = await clientApi.get(
+    `/interview/${id}/recording/upload-url?contentType=${encodeURIComponent(contentType)}`
+  );
+  return response.data.data;
+};
+
+export const completeInterviewRecordingUpload = async (
+  id: string,
+  key?: string
+): Promise<{ sessionId: string; videoKey: string }> => {
+  const response = await clientApi.post(`/interview/${id}/recording/complete`, { key });
+  return response.data.data;
+};

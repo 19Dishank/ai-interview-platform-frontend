@@ -152,3 +152,21 @@ export const uploadFileToS3 = async (presignedUrl: string, file: File) => {
   });
   return response.status >= 200 && response.status < 300;
 };
+
+/**
+ * 15. Get candidate dashboard overview data
+ */
+export const getCandidateDashboard = async () => {
+  const response = await clientApi.get("/candidate/dashboard");
+  return response.data?.data ?? response.data;
+};
+
+/**
+ * 16. Get verified assessment report
+ */
+export const getCandidateReport = async (interviewId?: string) => {
+  const queryStr = interviewId ? `?interviewId=${interviewId}` : "";
+  const response = await clientApi.get(`/candidate/report${queryStr}`);
+  return response.data?.data ?? response.data;
+};
+

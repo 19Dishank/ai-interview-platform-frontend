@@ -8,7 +8,8 @@ const ROLE_DASHBOARD: Record<Role, string> = {
 };
 
 function getActiveSession(req: NextRequest): { role: Role } | null {
-  const roleCookie = req.cookies.get("user_role")?.value as Role | undefined;
+  const rawRole = req.cookies.get("user_role")?.value;
+  const roleCookie = rawRole ? (rawRole.toUpperCase() as Role) : undefined;
 
   if (!roleCookie || !roleTokenMap[roleCookie] || !roleRefreshMap[roleCookie]) {
     return null;

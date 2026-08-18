@@ -4,6 +4,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import {
   startInterviewSession,
   fetchInterviewEvaluation,
+  fetchInterviewRecordingUploadUrl,
+  completeInterviewRecordingUpload,
 } from "@/services/interview/interview.services";
 import type {
   StartInterviewForm,
@@ -11,8 +13,41 @@ import type {
   InterviewEvaluation,
 } from "@/types/interview.types";
 
-const WS_BASE_URL =
-  process.env.NEXT_PUBLIC_WS_URL ?? "wss://w2r81bm2-3000.inc1.devtunnels.ms";
+function _getDynamicWsUrl(token: string, sessionId: string): string {
+  let wsBase = process.env.NEXT_PUBLIC_WS_URL || "";
+
+  if (typeof window !== "undefined") {
+    const isHttps = window.location.protocol === "https:";
+    const wsProto = isHttps ? "wss:" : "ws:";
+    const hostname = window.location.hostname;
+
+    // 1. Explicit NEXT_PUBLIC_WS_URL
+    if (wsBase && !wsBase.includes("localhost") && !wsBase.includes("127.0.0.1")) {
+      if (isHttps && wsBase.startsWith("ws://")) {
+        wsBase = wsBase.replace(/^ws:\/\//, "wss://");
+      }
+    } else if (hostname.includes("devtunnels.ms")) {
+      // 2. Map frontend tunnel (e.g. w2r81bm2-5173.inc1.devtunnels.ms) -> backend tunnel (w2r81bm2-3000.inc1.devtunnels.ms)
+      const backendTunnelHost = hostname.replace(/-\d+\./, "-3000.");
+      wsBase = `${wsProto}//${backendTunnelHost}`;
+    } else {
+      // 3. Localhost development -> direct to backend port 3000
+      wsBase = `${wsProto}//${hostname}:3000`;
+    }
+  }
+
+  if (!wsBase) {
+    wsBase = "ws://localhost:3000";
+  }
+
+  const cleanBase = wsBase.replace(/\/$/, "");
+  const wsEndpoint = cleanBase.endsWith("/ws/interview")
+    ? cleanBase
+    : `${cleanBase}/ws/interview`;
+
+  const finalUrl = `${wsEndpoint}?token=${encodeURIComponent(token)}&sessionId=${encodeURIComponent(sessionId)}`;
+  return finalUrl;
+}
 
 // ─── Audio Helpers ────────────────────────────────────────────────────────────
 
@@ -94,6 +129,7 @@ export function useAIInterview() {
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const recordedBlobsRef = useRef<Blob[]>([]);
 
   /** AudioContext for *mic capture* (16kHz input) */
   const micAudioCtxRef = useRef<AudioContext | null>(null);
@@ -106,6 +142,8 @@ export function useAIInterview() {
   const playbackAudioCtxRef = useRef<AudioContext | null>(null);
   /** Tracks scheduled end time for gapless chunk queuing */
   const nextPlaybackTimeRef = useRef<number>(0);
+
+  const speechRecRef = useRef<unknown>(null);
 
   // ── Control refs ──────────────────────────────────────────────────────────
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -247,7 +285,7 @@ export function useAIInterview() {
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.0;
+      utterance.rate = 1.2;
       utterance.pitch = 1.0;
       const voices = window.speechSynthesis.getVoices();
       const englishVoice =
@@ -260,6 +298,16 @@ export function useAIInterview() {
               v.name.includes("US"))
         ) || voices.find((v) => v.lang.startsWith("en"));
       if (englishVoice) utterance.voice = englishVoice;
+      const notifyEnd = () => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          try {
+            wsRef.current.send(JSON.stringify({ event: "ai-speaking-end" }));
+          } catch {}
+        }
+      };
+      utterance.onend = notifyEnd;
+      utterance.onerror = notifyEnd;
+
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.warn("Speech synthesis note:", e);
@@ -291,6 +339,12 @@ export function useAIInterview() {
     if (reconnectTimerRef.current) {
       clearTimeout(reconnectTimerRef.current);
       reconnectTimerRef.current = null;
+    }
+
+    if (speechRecRef.current) {
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      try { (speechRecRef.current as any).stop(); } catch {}
+      speechRecRef.current = null;
     }
 
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -362,7 +416,10 @@ export function useAIInterview() {
       audioProcessorRef.current = processor;
 
       source.connect(processor);
-      processor.connect(audioContext.destination);
+      const muteGain = audioContext.createGain();
+      muteGain.gain.value = 0;
+      processor.connect(muteGain);
+      muteGain.connect(audioContext.destination);
 
       let logCounter = 0;
 
@@ -381,17 +438,20 @@ export function useAIInterview() {
           if (abs > maxPeak) maxPeak = abs;
         }
 
-        const pcm16 = _downsampleTo16kHz(inputData, nativeSampleRate);
-        const packet = new Uint8Array(pcm16.buffer.byteLength + 1);
-        packet[0] = 0x01; // Audio prefix byte (16kHz PCM)
-        packet.set(new Uint8Array(pcm16.buffer), 1);
-        ws.send(packet.buffer);
+        // Filter out absolute silence to prevent WebSocket tunnel congestion
+        if (maxPeak > 0.02 || isLiveModeRef.current) {
+          const pcm16 = _downsampleTo16kHz(inputData, nativeSampleRate);
+          const packet = new Uint8Array(pcm16.buffer.byteLength + 1);
+          packet[0] = 0x01; // Audio prefix byte (16kHz PCM)
+          packet.set(new Uint8Array(pcm16.buffer), 1);
+          ws.send(packet.buffer);
 
-        logCounter++;
-        if (logCounter % 20 === 0 || maxPeak > 0.05) {
-          console.log(
-            `🎙️ [WS MIC → 0x01] ${packet.length} bytes | Peak: ${(maxPeak * 100).toFixed(1)}%`
-          );
+          logCounter++;
+          if (logCounter % 20 === 0 || maxPeak > 0.05) {
+            console.log(
+              `🎙️ [WS MIC → 0x01] ${packet.length} bytes | Peak: ${(maxPeak * 100).toFixed(1)}%`
+            );
+          }
         }
       };
 
@@ -403,47 +463,176 @@ export function useAIInterview() {
     }
   };
 
-  // ── Video Recording (WebM chunks → WS with 0x02 prefix) ──────────────────
+  // ── Video Recording (Local WebM Buffering → S3 Presigned Upload) ─────────
 
-  const _startVideoRecording = (ws: WebSocket, stream: MediaStream) => {
+  const _startVideoRecording = (_ws: WebSocket, stream: MediaStream) => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       try { mediaRecorderRef.current.stop(); } catch {}
     }
 
     let options: MediaRecorderOptions = {};
     if (typeof MediaRecorder !== "undefined") {
-      if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) {
+      if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")) {
+        options = { mimeType: "video/webm;codecs=vp9,opus" };
+      } else if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) {
         options = { mimeType: "video/webm;codecs=vp8,opus" };
+      } else if (MediaRecorder.isTypeSupported("video/webm;codecs=h264,opus")) {
+        options = { mimeType: "video/webm;codecs=h264,opus" };
       } else if (MediaRecorder.isTypeSupported("video/webm")) {
         options = { mimeType: "video/webm" };
+      } else if (MediaRecorder.isTypeSupported("video/mp4")) {
+        options = { mimeType: "video/mp4" };
       }
     }
 
     try {
       const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
+      recordedBlobsRef.current = [];
 
-      mediaRecorder.ondataavailable = async (e) => {
-        if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-          // Backpressure: drop video frame if buffer > 2 MB
-          if (ws.bufferedAmount > 2097152) {
-            console.warn("⚠️ [WS BACKPRESSURE] Dropping video frame");
-            return;
-          }
-          const buffer = await e.data.arrayBuffer();
-          const chunk = new Uint8Array(buffer);
-          const packet = new Uint8Array(chunk.length + 1);
-          packet[0] = 0x02; // Video prefix byte
-          packet.set(chunk, 1);
-          ws.send(packet.buffer);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          recordedBlobsRef.current.push(e.data);
         }
       };
 
-      mediaRecorder.start(5000);
+      mediaRecorder.start(1000);
+      console.log("🎥 [MediaRecorder] Video recording started with mimeType:", mediaRecorder.mimeType || options.mimeType);
     } catch (err) {
       console.error("Error starting MediaRecorder:", err);
     }
   };
+
+  // ── Real-Time Web Speech STT (0ms Local Latency) ──────────────────────────
+
+  const _startSpeechRecognition = useCallback(
+    (ws: WebSocket) => {
+      if (typeof window === "undefined") return;
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRec) return;
+
+      try {
+        if (speechRecRef.current) {
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          try { (speechRecRef.current as any).stop(); } catch {}
+        }
+
+        const recognition = new SpeechRec();
+        speechRecRef.current = recognition;
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+
+        let lastSentText = "";
+
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        recognition.onresult = (e: any) => {
+          let currentFinal = "";
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            const transcriptPart = e.results[i][0].transcript;
+            if (e.results[i].isFinal) {
+              currentFinal += transcriptPart + " ";
+            }
+          }
+
+          const trimmed = currentFinal.trim();
+          if (trimmed && trimmed !== lastSentText && trimmed.length > 1) {
+            lastSentText = trimmed;
+            console.log("⚡ [0ms WebSpeech STT] Final:", trimmed);
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(
+                JSON.stringify({
+                  event: "transcript-turn",
+                  role: "CANDIDATE",
+                  text: trimmed,
+                })
+              );
+              _appendTurn("CANDIDATE", trimmed);
+            }
+          }
+        };
+
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        recognition.onerror = (e: any) => {
+          if (e.error !== "no-speech") {
+            console.warn("WebSpeech recognition note:", e.error);
+          }
+        };
+
+        recognition.onend = () => {
+          if (!isManualEndRef.current && ws.readyState === WebSocket.OPEN) {
+            try { recognition.start(); } catch {}
+          }
+        };
+
+        recognition.start();
+        console.log("⚡ [0ms WebSpeech STT Engine] Active for Instant Turn-Taking");
+      } catch (err) {
+        console.warn("WebSpeech start note:", err);
+      }
+    },
+    [_appendTurn]
+  );
+
+  // ── Finalize Interview & Direct S3 Video Upload ───────────────────────────
+
+  const _finalizeInterview = useCallback(
+    async (targetSessionId: string) => {
+      // 1. Cleanly flush and stop MediaRecorder to guarantee complete WebM headers & duration
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        await new Promise<void>((resolve) => {
+          if (!mediaRecorderRef.current) return resolve();
+          mediaRecorderRef.current.onstop = () => resolve();
+          try {
+            mediaRecorderRef.current.requestData();
+            mediaRecorderRef.current.stop();
+          } catch {
+            resolve();
+          }
+        });
+      }
+
+      // 2. Upload full video recording blob to S3 via pre-signed URL
+      if (targetSessionId && recordedBlobsRef.current.length > 0) {
+        try {
+          const rawMimeType = mediaRecorderRef.current?.mimeType || "video/webm";
+          const contentType = rawMimeType.split(";")[0] || "video/webm";
+          const fullBlob = new Blob(recordedBlobsRef.current, { type: contentType });
+          if (fullBlob.size > 500) {
+            console.log(`🎥 [S3 Upload] Uploading ${fullBlob.size} bytes (${contentType}) video recording via pre-signed URL...`);
+            const uploadRes = await fetchInterviewRecordingUploadUrl(targetSessionId, contentType);
+            if (uploadRes?.uploadUrl) {
+              await fetch(uploadRes.uploadUrl, {
+                method: "PUT",
+                headers: { "Content-Type": contentType },
+                body: fullBlob,
+              });
+              await completeInterviewRecordingUpload(targetSessionId, uploadRes.key);
+              console.log("🎥 [S3 Upload] Full interview recording uploaded successfully to S3.");
+            }
+          }
+        } catch (uploadErr) {
+          console.warn("Direct S3 recording upload note:", uploadErr);
+        }
+      }
+
+      _stopAllMedia();
+
+      // 3. Fetch or trigger on-demand evaluation
+      if (targetSessionId) {
+        try {
+          const evalData = await fetchInterviewEvaluation(targetSessionId);
+          setEvaluation(evalData);
+        } catch (evalErr) {
+          console.warn("Evaluation fetch note:", evalErr);
+        }
+      }
+
+      setStatus("COMPLETED");
+    },
+    [_stopAllMedia]
+  );
 
   // ── WebSocket Connection ──────────────────────────────────────────────────
 
@@ -463,11 +652,8 @@ export function useAIInterview() {
         wsRef.current = null;
       }
 
-      const cleanBase = WS_BASE_URL.replace(/\/$/, "");
-      const wsEndpoint = cleanBase.endsWith("/ws/interview")
-        ? cleanBase
-        : `${cleanBase}/ws/interview`;
-      const wsUrl = `${wsEndpoint}?token=${encodeURIComponent(token)}&sessionId=${encodeURIComponent(targetSessionId)}`;
+      const wsUrl = _getDynamicWsUrl(token, targetSessionId);
+      console.log("🔌 [WebSocket Connecting] URL:", wsUrl);
 
       const ws = new WebSocket(wsUrl);
       ws.binaryType = "arraybuffer";
@@ -480,6 +666,7 @@ export function useAIInterview() {
         _startHeartbeat(ws);
         _startVideoRecording(ws, stream);
         _startAudioStreaming(ws, stream);
+        _startSpeechRecognition(ws);
       };
 
       ws.onmessage = async (event) => {
@@ -574,44 +761,25 @@ export function useAIInterview() {
                   _appendTurn(role, textContent);
                 }
               }
-              if (msg.event === "interview-complete") {
+              if (msg.event === "interview-complete" && !isManualEndRef.current) {
                 console.log("🏁 [WS] Interview complete");
                 isManualEndRef.current = true;
                 setStatus("ENDED");
                 setAlexSpeaking(false);
                 _stopHeartbeat();
-                _stopAllMedia();
-
-                try {
-                  const evalData = await fetchInterviewEvaluation(targetSessionId);
-                  setEvaluation(evalData);
-                } catch (evalErr) {
-                  console.error("Evaluation fetch failed:", evalErr);
-                }
-
-                setStatus("COMPLETED");
+                await _finalizeInterview(targetSessionId);
               }
               break;
             }
           }
 
-          // Also handle interview-complete from the switch default block
           if (msg.event === "interview-complete" && !isManualEndRef.current) {
             console.log("🏁 [WS] Interview complete");
             isManualEndRef.current = true;
             setStatus("ENDED");
             setAlexSpeaking(false);
             _stopHeartbeat();
-            _stopAllMedia();
-
-            try {
-              const evalData = await fetchInterviewEvaluation(targetSessionId);
-              setEvaluation(evalData);
-            } catch (evalErr) {
-              console.error("Evaluation fetch failed:", evalErr);
-            }
-
-            setStatus("COMPLETED");
+            await _finalizeInterview(targetSessionId);
           }
         } catch (e) {
           console.error("Error handling WebSocket message:", e);
@@ -681,8 +849,98 @@ export function useAIInterview() {
       _playLiveAudioChunk,
       _appendTurn,
       _stopAllMedia,
+      _finalizeInterview,
     ]
   );
+
+  const [mediaWarning, setMediaWarning] = useState<string | null>(null);
+
+  // ── Resilient Media Acquisition (Handles NotReadableError & hardware locks) ──
+
+  const _acquireMediaStream = useCallback(async (): Promise<MediaStream> => {
+    // 1. Ensure any stale tracks from previous sessions are cleanly stopped
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => {
+        try { t.stop(); } catch {}
+      });
+      streamRef.current = null;
+    }
+
+    setMediaWarning(null);
+
+    // 2. Try primary high-quality camera + mic acquisition
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 24, max: 30 },
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+    } catch (primaryErr: any) {
+      console.warn("Primary camera/mic constraints failed, retrying basic constraints:", primaryErr);
+
+      // 3. Try basic video + audio
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+      } catch (basicErr: any) {
+        console.warn("Basic video+audio getUserMedia failed (NotReadableError or locked):", basicErr);
+
+        // 4. Fallback to audio-only if video is locked by another process (e.g. Teams, Zoom, Meet, browser lock)
+        try {
+          const audioStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+
+          // Create fallback video track from canvas so MediaRecorder & video elements stay valid
+          if (typeof document !== "undefined") {
+            const canvas = document.createElement("canvas");
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              ctx.fillStyle = "#090d16";
+              ctx.fillRect(0, 0, 640, 480);
+              ctx.fillStyle = "#64748b";
+              ctx.font = "bold 18px sans-serif";
+              ctx.textAlign = "center";
+              ctx.fillText("Camera in use by another app", 320, 230);
+              ctx.font = "14px sans-serif";
+              ctx.fillStyle = "#475569";
+              ctx.fillText("Audio Mode Active — Speak naturally", 320, 260);
+            }
+            const canvasStream = (canvas as any).captureStream ? (canvas as any).captureStream(5) : null;
+            const dummyVideoTrack = canvasStream?.getVideoTracks()?.[0];
+            if (dummyVideoTrack) {
+              audioStream.addTrack(dummyVideoTrack);
+            }
+          }
+
+          setMediaWarning(
+            basicErr?.name === "NotReadableError"
+              ? "Your webcam is currently locked by another application. Switched to Audio Mode."
+              : "Camera unavailable. Switched to Audio Mode."
+          );
+
+          return audioStream;
+        } catch (audioOnlyErr: any) {
+          throw new Error(
+            basicErr?.name === "NotReadableError"
+              ? "Your camera or microphone is locked by another application (e.g. Teams, Zoom, Meet). Please close other apps and try again."
+              : basicErr?.message || "Could not access microphone or camera."
+          );
+        }
+      }
+    }
+  }, []);
 
   // ── Public API ────────────────────────────────────────────────────────────
 
@@ -709,11 +967,8 @@ export function useAIInterview() {
 
         currentSessionRef.current = { sessionId: session.sessionId, token };
 
-        // 3. Acquire camera + mic (resume any suspended playback context on user gesture)
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
+        // 3. Acquire camera + mic with resilient NotReadableError fallback
+        const stream = await _acquireMediaStream();
         streamRef.current = stream;
         setMediaStream(stream);
 
@@ -727,13 +982,14 @@ export function useAIInterview() {
 
         // 4. Open WebSocket
         await _connectSocket(session.sessionId, token, stream);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to start interview:", err);
+        alert(err?.message || "Failed to start interview. Please check your camera and microphone permissions.");
         setStatus("IDLE");
         _stopAllMedia();
       }
     },
-    [_connectSocket, _stopAllMedia]
+    [_connectSocket, _acquireMediaStream, _stopAllMedia]
   );
 
   const sendAnswer = useCallback(
@@ -749,7 +1005,58 @@ export function useAIInterview() {
     [_appendTurn]
   );
 
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
+
+  const toggleScreenShare = useCallback(async () => {
+    if (!streamRef.current) return;
+
+    if (!isScreenSharing) {
+      try {
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: false,
+        });
+        const screenTrack = displayStream.getVideoTracks()[0];
+        if (!screenTrack) return;
+
+        const currentVideoTrack = streamRef.current.getVideoTracks()[0];
+        if (currentVideoTrack) {
+          cameraTrackRef.current = currentVideoTrack;
+          streamRef.current.removeTrack(currentVideoTrack);
+        }
+
+        streamRef.current.addTrack(screenTrack);
+        setMediaStream(new MediaStream(streamRef.current.getTracks()));
+        setIsScreenSharing(true);
+
+        screenTrack.onended = () => {
+          if (cameraTrackRef.current && streamRef.current) {
+            streamRef.current.removeTrack(screenTrack);
+            streamRef.current.addTrack(cameraTrackRef.current);
+            setMediaStream(new MediaStream(streamRef.current.getTracks()));
+            setIsScreenSharing(false);
+          }
+        };
+      } catch (err) {
+        console.warn("Screen share cancel or error:", err);
+      }
+    } else {
+      const currentScreenTrack = streamRef.current.getVideoTracks()[0];
+      if (currentScreenTrack) {
+        currentScreenTrack.stop();
+        streamRef.current.removeTrack(currentScreenTrack);
+      }
+      if (cameraTrackRef.current) {
+        streamRef.current.addTrack(cameraTrackRef.current);
+      }
+      setMediaStream(new MediaStream(streamRef.current.getTracks()));
+      setIsScreenSharing(false);
+    }
+  }, [isScreenSharing]);
+
   const endInterview = useCallback(async () => {
+    if (isManualEndRef.current) return;
     isManualEndRef.current = true;
     setStatus("ENDED");
     setAlexSpeaking(false);
@@ -764,19 +1071,14 @@ export function useAIInterview() {
       }
     }
 
-    _stopAllMedia();
-
-    if (sessionId) {
-      try {
-        const evalData = await fetchInterviewEvaluation(sessionId);
-        setEvaluation(evalData);
-      } catch (evalErr) {
-        console.warn("Evaluation fetch note:", evalErr);
-      }
+    const currentId = sessionId || currentSessionRef.current?.sessionId;
+    if (currentId) {
+      await _finalizeInterview(currentId);
+    } else {
+      _stopAllMedia();
+      setStatus("COMPLETED");
     }
-
-    setStatus("COMPLETED");
-  }, [sessionId, _stopHeartbeat, _stopAllMedia]);
+  }, [sessionId, _stopHeartbeat, _finalizeInterview, _stopAllMedia]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -797,6 +1099,9 @@ export function useAIInterview() {
     evaluation,
     stream: mediaStream,
     streamRef,
+    mediaWarning,
+    isScreenSharing,
+    toggleScreenShare,
     /** True when the backend is running in Gemini Live native audio mode */
     isLiveMode,
     /** True while Gemini Live is actively streaming audio chunks */

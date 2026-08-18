@@ -16,16 +16,22 @@ import {
   Brain,
   MessageSquare,
   Code2,
+  Bot,
+  User,
+  Copy,
+  FileText,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/Shell";
 import { Button } from "@/components/ui/Button";
 import {
   fetchInterviewEvaluation,
   fetchInterviewRecording,
+  fetchInterviewTranscript,
 } from "@/services/interview/interview.services";
 import type {
   InterviewEvaluation,
   InterviewRecording,
+  InterviewTranscript,
   HiringRecommendation,
 } from "@/types/interview.types";
 
@@ -36,6 +42,7 @@ export default function CandidateEvaluationPage() {
 
   const [evaluation, setEvaluation] = useState<InterviewEvaluation | null>(null);
   const [recording, setRecording] = useState<InterviewRecording | null>(null);
+  const [transcript, setTranscript] = useState<InterviewTranscript | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,24 +51,46 @@ export default function CandidateEvaluationPage() {
 
     let isMounted = true;
 
-    async function loadData() {
+    async function loadData(retryCount = 0) {
       setLoading(true);
       setError(null);
 
       try {
         const evalResult = await fetchInterviewEvaluation(id);
-        if (isMounted) setEvaluation(evalResult);
+        if (isMounted && evalResult) {
+          setEvaluation(evalResult);
+        }
       } catch (err) {
-        console.error("Failed to load evaluation data:", err);
-        if (isMounted) setError("Could not load evaluation report.");
+        console.error("Failed to load evaluation data (attempt " + (retryCount + 1) + "):", err);
+        if (retryCount < 2 && isMounted) {
+          setTimeout(() => {
+            if (isMounted) loadData(retryCount + 1);
+          }, 1500);
+          return;
+        }
+        if (isMounted) setError("Could not load evaluation report. The AI evaluator may still be finalizing results.");
       }
 
       try {
         const recResult = await fetchInterviewRecording(id);
-        if (isMounted) setRecording(recResult);
+        if (isMounted && recResult?.downloadUrl) {
+          setRecording(recResult);
+        } else if (isMounted && retryCount < 4) {
+          setTimeout(() => {
+            if (isMounted) loadData(retryCount + 1);
+          }, 2000);
+        }
       } catch (recErr) {
-        // Recording might be optional or still encoding
         console.warn("Recording fetch note:", recErr);
+      }
+
+      try {
+        const transResult = await fetchInterviewTranscript(id);
+        if (isMounted && transResult) {
+          setTranscript(transResult);
+        }
+      } catch (transErr) {
+        console.warn("Transcript fetch note:", transErr);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -119,7 +148,7 @@ export default function CandidateEvaluationPage() {
     return (
       <div className="max-w-5xl mx-auto py-16 flex flex-col items-center justify-center space-y-4">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
-        <p className="text-sm text-muted-foreground">Generating evaluation report...</p>
+        <p className="text-sm text-muted-foreground">Finalizing and loading evaluation report...</p>
       </div>
     );
   }
@@ -132,9 +161,14 @@ export default function CandidateEvaluationPage() {
         <p className="text-muted-foreground text-sm">
           {error ?? "Report data is currently unavailable."}
         </p>
-        <Button variant="outline" onClick={() => router.push("/candidate/dashboard")}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Return to Dashboard
-        </Button>
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+          <Button variant="outline" onClick={() => router.push("/candidate/dashboard")}>
+            <ArrowLeft className="h-4 w-4 mr-2" /> Return to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
@@ -317,16 +351,91 @@ export default function CandidateEvaluationPage() {
         </div>
 
         {recording?.downloadUrl ? (
-          <div className="rounded-lg overflow-hidden bg-zinc-950 aspect-video max-w-3xl mx-auto">
+          <div className="rounded-lg overflow-hidden bg-zinc-950 aspect-video max-w-3xl mx-auto flex flex-col items-center justify-center border border-border/60 relative">
             <video
+              key={recording.downloadUrl}
               src={recording.downloadUrl}
               controls
+              playsInline
+              preload="metadata"
               className="w-full h-full object-contain"
             />
           </div>
         ) : (
           <div className="p-8 text-center bg-secondary/50 rounded-lg border border-border text-sm text-muted-foreground">
-            Video recording stream playback is currently processing or unavailable.
+            Video recording stream playback is currently processing or unavailable. You can review the full dialogue in the transcript below.
+          </div>
+        )}
+      </div>
+
+      {/* Full Interview Transcript */}
+      <div className="bg-card border border-border rounded-xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 font-semibold text-base">
+            <MessageSquare className="h-5 w-5 text-primary" /> Interview Transcript
+            {transcript?.turns && transcript.turns.length > 0 && (
+              <span className="text-xs text-muted-foreground font-normal">
+                ({transcript.turns.length} turns recorded)
+              </span>
+            )}
+          </div>
+          {transcript?.turns && transcript.turns.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-xs"
+              onClick={() => {
+                const text = transcript.turns
+                  .map((t) => `[${t.role === "AI" ? "Alex (AI Interviewer)" : "Candidate"}]: ${t.text}`)
+                  .join("\n\n");
+                navigator.clipboard?.writeText(text);
+                alert("Transcript copied to clipboard!");
+              }}
+            >
+              <Copy className="h-3.5 w-3.5" /> Copy Full Transcript
+            </Button>
+          )}
+        </div>
+
+        {transcript?.turns && transcript.turns.length > 0 ? (
+          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+            {transcript.turns.map((turn, idx) => {
+              const isAi = turn.role === "AI";
+              return (
+                <div
+                  key={idx}
+                  className={`flex items-start gap-3 ${isAi ? "justify-start" : "justify-end"}`}
+                >
+                  {isAi && (
+                    <div className="p-2 rounded-full bg-primary/10 text-primary shrink-0 mt-1">
+                      <Bot className="h-4 w-4" />
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 text-sm leading-relaxed shadow-sm ${
+                      isAi
+                        ? "bg-secondary text-secondary-foreground rounded-tl-none border border-border/50"
+                        : "bg-primary text-primary-foreground rounded-tr-none"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1.5 text-xs opacity-75">
+                      <span className="font-semibold">{isAi ? "Alex (AI Interviewer)" : "You (Candidate)"}</span>
+                      {turn.turnNumber && <span>Turn #{turn.turnNumber}</span>}
+                    </div>
+                    <p className="whitespace-pre-wrap">{turn.text}</p>
+                  </div>
+                  {!isAi && (
+                    <div className="p-2 rounded-full bg-secondary text-secondary-foreground shrink-0 mt-1">
+                      <User className="h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-8 text-center bg-secondary/30 rounded-lg border border-border text-sm text-muted-foreground">
+            No transcript turns found for this session.
           </div>
         )}
       </div>

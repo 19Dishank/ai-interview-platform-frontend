@@ -4,7 +4,10 @@ import { cookies } from "next/headers";
 
 export const GET = withErrorHandler(async () => {
   const cookieStore = await cookies();
-  const token = cookieStore.get("candidate_token")?.value;
+  const token =
+    cookieStore.get("candidate_token")?.value ||
+    cookieStore.get("recruiter_token")?.value ||
+    cookieStore.get("admin_token")?.value;
 
   if (!token) {
     return NextResponse.json(

@@ -1,20 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
-import { mockCandidates, mockEvidenceItems } from "@/data/mock";
+import React, { useState, useEffect } from "react";
 import ContactModal from "@/components/recruiter/ContactModal";
 import DetailHeader from "@/components/recruiter/detail/DetailHeader";
 import ProfileTab from "@/components/recruiter/detail/ProfileTab";
 import InterviewTab from "@/components/recruiter/detail/InterviewTab";
 import AssessmentTab from "@/components/recruiter/detail/AssessmentTab";
-
-const technicalSkills = [
-  { label: "Core domain knowledge", score: 93 },
-  { label: "Problem-solving approach", score: 88 },
-  { label: "Code quality & patterns", score: 85 },
-  { label: "System design awareness", score: 89 },
-  { label: "Testing & quality mindset", score: 72 },
-];
+import { fetchCandidateDetail } from "@/services/recruiter/recruiter.services";
+import { Loader2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -22,12 +17,63 @@ interface PageProps {
 
 export default function CandidateDetail({ params }: PageProps) {
   const { id } = React.use(params);
-  const candidate =
-    mockCandidates.find((c) => c.id === id) || mockCandidates[0];
+  const [candidate, setCandidate] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [contactOpen, setContactOpen] = useState(false);
   const [tab, setTab] = useState<"profile" | "interview" | "assessment">(
     "profile",
   );
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      setLoading(true);
+      try {
+        const res = await fetchCandidateDetail(id);
+        if (isMounted && (res?.data || res?.candidate)) {
+          setCandidate(res.data || res.candidate || res);
+        } else {
+          setCandidate(null);
+        }
+      } catch {
+        if (isMounted) setCandidate(null);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-28 text-muted-foreground gap-3">
+        <Loader2 size={36} className="animate-spin text-primary" />
+        <p className="text-sm font-medium">Loading candidate profile...</p>
+      </div>
+    );
+  }
+
+  if (!candidate) {
+    return (
+      <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border p-8 max-w-lg mx-auto mt-8">
+        <h3 className="font-semibold text-lg mb-2">Candidate Not Found</h3>
+        <p className="text-sm text-muted-foreground mb-6">
+          The requested candidate profile does not exist or has been removed from the platform.
+        </p>
+        <Link href="/recruiter/search">
+          <Button variant="outline" size="sm" className="gap-2">
+            <ArrowLeft size={14} /> Back to candidate search
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const evidence = candidate?.evidenceItems || [];
+  const techSkills = candidate?.technicalSkills || [];
 
   return (
     <>
@@ -52,12 +98,12 @@ export default function CandidateDetail({ params }: PageProps) {
 
       {tab === "profile" && <ProfileTab candidate={candidate} />}
       {tab === "interview" && (
-        <InterviewTab candidate={candidate} evidenceItems={mockEvidenceItems} />
+        <InterviewTab candidate={candidate} evidenceItems={evidence} />
       )}
       {tab === "assessment" && (
         <AssessmentTab
           candidate={candidate}
-          technicalSkills={technicalSkills}
+          technicalSkills={techSkills}
         />
       )}
 

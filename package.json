@@ -2,8 +2,9 @@
   "name": "ai-interview-platform",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 5173",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -25,9 +26,11 @@
     "@radix-ui/react-tooltip": "^1.2.12",
     "@react-oauth/google": "^0.13.5",
     "@reduxjs/toolkit": "^2.12.0",
+    "@types/ws": "^8.18.1",
     "axios": "^1.18.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
+    "http-proxy": "^1.18.1",
     "lucide-react": "^1.25.0",
     "next": "16.2.10",
     "react": "19.2.4",
@@ -38,6 +41,7 @@
     "recharts": "^3.9.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
+    "ws": "^8.21.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {

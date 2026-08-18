@@ -33,8 +33,9 @@ export default function BasicInfoForm() {
   } = useFormContext<CandidateProfileForm>();
 
   const avatarKey = watch("basicInfo.avatarKey");
+  const formAvatarUrl = watch("basicInfo.avatarUrl");
   const pendingUpload = watch("basicInfo.pendingUpload");
-  const [remoteAvatarUrl, setRemoteAvatarUrl] = useState<string | undefined>();
+  const [remoteAvatarUrl, setRemoteAvatarUrl] = useState<string | undefined>(formAvatarUrl);
   const [photoError, setPhotoError] = useState<string | undefined>();
   const [gettingPresignedUrl, setGettingPresignedUrl] = useState(false);
   const [loadingAvatarUrl, setLoadingAvatarUrl] = useState(false);
@@ -44,11 +45,17 @@ export default function BasicInfoForm() {
     ? URL.createObjectURL(pendingUpload.file)
     : undefined;
 
-  const photoPreview = localPreviewUrl || remoteAvatarUrl;
+  const photoPreview = localPreviewUrl || remoteAvatarUrl || formAvatarUrl;
+
+  useEffect(() => {
+    if (formAvatarUrl && !remoteAvatarUrl) {
+      setRemoteAvatarUrl(formAvatarUrl);
+    }
+  }, [formAvatarUrl, remoteAvatarUrl]);
 
   useEffect(() => {
     let isCancelled = false;
-    if (avatarKey && !localPreviewUrl && !remoteAvatarUrl) {
+    if (avatarKey && !localPreviewUrl && !remoteAvatarUrl && !formAvatarUrl) {
       queueMicrotask(() => {
         if (!isCancelled) setLoadingAvatarUrl(true);
       });
@@ -74,7 +81,7 @@ export default function BasicInfoForm() {
     return () => {
       isCancelled = true;
     };
-  }, [avatarKey, localPreviewUrl, remoteAvatarUrl]);
+  }, [avatarKey, localPreviewUrl, remoteAvatarUrl, formAvatarUrl]);
 
   const handleFileSelection = async (file: File) => {
     if (!file.type.startsWith("image/")) {

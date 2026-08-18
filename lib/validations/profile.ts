@@ -117,6 +117,8 @@ export const basicInfoSchema = z.object({
 
   avatarKey: z.string().trim().min(1, "Profile photo is required."),
 
+  avatarUrl: z.string().optional(),
+
   profilePhoto: z.any().optional(),
 
   pendingUpload: z

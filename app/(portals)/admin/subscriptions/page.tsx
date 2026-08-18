@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/Shell";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { mockPlans } from "@/data/mock";
 import { formatDate } from "@/lib/utils";
+import { fetchAdminSubscriptions } from "@/services/admin/admin.services";
+import type { Plan } from "@/types";
 
 const planColors: Record<string, string> = {
   Starter: "bg-secondary text-secondary-foreground",
@@ -14,9 +16,37 @@ const planColors: Record<string, string> = {
 };
 
 export default function SubscriptionManagement() {
-  const [plans] = useState(mockPlans);
+  const [plans, setPlans] = useState<Plan[]>(mockPlans);
+  const [mrrStats, setMrrStats] = useState<{
+    monthlyRecurringRevenue: number;
+    activeSubscriptions: number;
+    expiredSubscriptions: number;
+  }>({
+    monthlyRecurringRevenue: 61500,
+    activeSubscriptions: mockPlans.filter((p) => p.status === "active").length,
+    expiredSubscriptions: mockPlans.filter((p) => p.status === "expired").length,
+  });
 
-  const total = plans
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      try {
+        const res = await fetchAdminSubscriptions();
+        if (isMounted && res) {
+          if (res.plans) setPlans(res.plans);
+          if (res.stats) setMrrStats(res.stats);
+        }
+      } catch {
+        // Fallback in place
+      }
+    }
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const total = mrrStats.monthlyRecurringRevenue || plans
     .filter((p) => p.status === "active")
     .reduce((acc, p) => acc + parseInt(p.monthly.replace(/[^\d]/g, "")), 0);
 
@@ -48,7 +78,7 @@ export default function SubscriptionManagement() {
               Active subscriptions
             </div>
             <div className="font-mono text-2xl font-semibold">
-              {plans.filter((p) => p.status === "active").length}
+              {mrrStats.activeSubscriptions || plans.filter((p) => p.status === "active").length}
             </div>
           </CardContent>
         </Card>
@@ -58,7 +88,7 @@ export default function SubscriptionManagement() {
               Expired / cancelled
             </div>
             <div className="font-mono text-2xl font-semibold text-destructive">
-              {plans.filter((p) => p.status === "expired").length}
+              {mrrStats.expiredSubscriptions || plans.filter((p) => p.status === "expired").length}
             </div>
           </CardContent>
         </Card>

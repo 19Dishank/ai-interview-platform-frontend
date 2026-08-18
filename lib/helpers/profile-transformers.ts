@@ -118,6 +118,7 @@ export function transformCandidateProfile(rawData: unknown) {
       lastName: (info.lastName as string) || "",
       location: (info.location as string) || "",
       avatarKey: (info.avatarKey as string) || "",
+      avatarUrl: (info.avatarUrl as string) || (data.avatarUrl as string) || "",
     },
     education:
       Array.isArray(rawEducation) && rawEducation.length > 0
