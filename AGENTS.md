@@ -97,3 +97,14 @@ All forms in this project MUST use `react-hook-form` paired with `zod` and `@hoo
 - **Axios (clientApi & serverApi)**
 - **Sonner (Toast notifications)**
 - **Lucide React (Icons)**
+
+---
+
+## 🎙️ 5. AI Interview Engine — Mandatory Reference
+
+Whenever you are implementing, modifying, or debugging **any interview-related feature** (session start, WebSocket streaming, evaluation, transcript, recording, history), you MUST:
+
+1. **Read `AI_INTERVIEW_ENGINE.md` first** — it is the single source of truth for all API endpoints, request/response shapes, WebSocket protocol (binary packet prefixes, server events), BFF route file paths, TypeScript types, and the `useAIInterview` hook structure.
+2. **Follow the file map exactly** — create files at the paths defined in Section 7 of `AI_INTERVIEW_ENGINE.md`. Do not invent alternative locations.
+3. **WebSocket is client-direct** — the WS connection is opened from the browser using a token retrieved from the `/api/interview/ws-token` BFF endpoint. Do not attempt to proxy WebSocket through Next.js API routes.
+4. **REST is always BFF-proxied** — all REST calls from client components go through `/api/interview/...` BFF routes using `clientApi`. Never call the backend base URL directly from client code.

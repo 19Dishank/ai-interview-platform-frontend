@@ -1,9 +1,11 @@
+import { Role } from "@/lib/auth/role-cookie-map";
+
 export interface User {
-  id: string
-  name: string
-  email: string
-  role: 'candidate' | 'recruiter' | 'admin' | string
-  status: 'active' | 'suspended' | string
-  joined: string
-  interviews: number
+  avatar: string | null;
+  email: string;
+  id: string;
+  name: string | null;
+  role: Role;
+  isProfileCompleted: boolean;
+  onboardingStep: number | null;
 }

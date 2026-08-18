@@ -17,15 +17,35 @@ export default function Footer() {
             height={20}
             className="w-5 h-5 object-contain hidden dark:block"
           />
-          <span className="font-display text-sm font-medium text-foreground">Verquo</span>
+          <span className="font-display text-sm font-medium text-foreground">
+            Verquo
+          </span>
         </div>
         <span>© 2026 Verquo AI. Platform for verified hiring evidence.</span>
         <div className="flex gap-4">
-          <a id="footer-link-privacy" href="#" className="hover:text-foreground transition-colors">Privacy</a>
-          <a id="footer-link-terms" href="#" className="hover:text-foreground transition-colors">Terms</a>
-          <a id="footer-link-contact" href="#" className="hover:text-foreground transition-colors">Contact</a>
+          <a
+            id="footer-link-privacy"
+            href="#"
+            className="hover:text-foreground transition-colors"
+          >
+            Privacy
+          </a>
+          <a
+            id="footer-link-terms"
+            href="#"
+            className="hover:text-foreground transition-colors"
+          >
+            Terms
+          </a>
+          <a
+            id="footer-link-contact"
+            href="#"
+            className="hover:text-foreground transition-colors"
+          >
+            Contact
+          </a>
         </div>
       </div>
     </footer>
-  )
+  );
 }

@@ -1,45 +1,234 @@
-import { Upload } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+/* eslint-disable @next/next/no-img-element */
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { Upload, AlertCircle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { EditableSelect } from "@/components/ui/EditableSelect";
+import { Controller, useFormContext } from "react-hook-form";
+import { CandidateProfileForm } from "@/types/profile.types";
+import {
+  getAvatarPresignedUrl,
+  getAvatarUrl,
+} from "@/services/candidate/candidate.services";
+import { toast } from "sonner";
+
+const locationOptions = [
+  "Bangalore, India",
+  "Mumbai, India",
+  "Hyderabad, India",
+  "Delhi, India",
+  "Remote",
+];
 
 export default function BasicInfoForm() {
+  const {
+    register,
+    control,
+    setValue,
+    clearErrors,
+    watch,
+    formState: { errors },
+  } = useFormContext<CandidateProfileForm>();
+
+  const avatarKey = watch("basicInfo.avatarKey");
+  const formAvatarUrl = watch("basicInfo.avatarUrl");
+  const pendingUpload = watch("basicInfo.pendingUpload");
+  const [remoteAvatarUrl, setRemoteAvatarUrl] = useState<string | undefined>(formAvatarUrl);
+  const [photoError, setPhotoError] = useState<string | undefined>();
+  const [gettingPresignedUrl, setGettingPresignedUrl] = useState(false);
+  const [loadingAvatarUrl, setLoadingAvatarUrl] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const localPreviewUrl = pendingUpload?.file
+    ? URL.createObjectURL(pendingUpload.file)
+    : undefined;
+
+  const photoPreview = localPreviewUrl || remoteAvatarUrl || formAvatarUrl;
+
+  useEffect(() => {
+    if (formAvatarUrl && !remoteAvatarUrl) {
+      setRemoteAvatarUrl(formAvatarUrl);
+    }
+  }, [formAvatarUrl, remoteAvatarUrl]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    if (avatarKey && !localPreviewUrl && !remoteAvatarUrl && !formAvatarUrl) {
+      queueMicrotask(() => {
+        if (!isCancelled) setLoadingAvatarUrl(true);
+      });
+      getAvatarUrl()
+        .then((res) => {
+          if (isCancelled) return;
+          const resData = res?.data ?? res;
+          const displayUrl =
+            resData?.url ||
+            resData?.avatarUrl ||
+            (typeof resData === "string" ? resData : null);
+          if (displayUrl) {
+            setRemoteAvatarUrl(displayUrl);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching avatar display URL:", err);
+        })
+        .finally(() => {
+          if (!isCancelled) setLoadingAvatarUrl(false);
+        });
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [avatarKey, localPreviewUrl, remoteAvatarUrl, formAvatarUrl]);
+
+  const handleFileSelection = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Please select a valid image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("Image file size must be less than 5MB.");
+      return;
+    }
+
+    setPhotoError(undefined);
+
+    setGettingPresignedUrl(true);
+    try {
+      const response = await getAvatarPresignedUrl({
+        fileName: file.name,
+        contentType: file.type,
+      });
+
+      const resData = response.data?.data ?? response.data;
+      const key = resData?.key;
+      const uploadUrl = resData?.uploadUrl;
+
+      if (key && uploadUrl) {
+        setValue("basicInfo.avatarKey", key, { shouldValidate: true });
+        setValue("basicInfo.pendingUpload", { file, uploadUrl });
+        // Clear stale validation errors so the "photo required" message disappears immediately
+        clearErrors("basicInfo.avatarKey");
+        clearErrors("basicInfo.profilePhoto");
+      } else {
+        setPhotoError("Failed to obtain avatar upload URL.");
+      }
+    } catch (err: unknown) {
+      console.error("Presigned URL error:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to generate presigned upload URL.";
+      setPhotoError(errorMessage);
+    } finally {
+      setGettingPresignedUrl(false);
+    }
+  };
+
+  const basicInfoErrors = errors.basicInfo;
+
   return (
-    <div className="flex flex-col gap-5">
-      <h2 className="font-display text-xl font-semibold mb-2">Basic information</h2>
+    <div className="flex flex-col gap-6">
+      <h2 className="font-display text-xl font-semibold">Basic information</h2>
+
       <div className="flex items-center gap-4 p-4 border border-dashed border-border rounded-lg">
-        <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
-          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&auto=format" alt="Profile" className="w-full h-full object-cover" />
+        <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center overflow-hidden shrink-0">
+          {loadingAvatarUrl ? (
+            <Loader2 size={18} className="animate-spin text-muted-foreground" />
+          ) : photoPreview ? (
+            <img
+              src={photoPreview}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-xs text-muted-foreground">No photo</span>
+          )}
         </div>
         <div>
-          <Button variant="outline" size="sm" type="button"><Upload size={14} /> Upload photo</Button>
-          <p className="text-xs text-muted-foreground mt-1">JPG, PNG up to 2 MB</p>
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            disabled={gettingPresignedUrl}
+            onClick={() => photoInputRef.current?.click()}
+          >
+            {gettingPresignedUrl ? (
+              <>
+                <Loader2 size={14} className="animate-spin" /> Generating URL...
+              </>
+            ) : (
+              <>
+                <Upload size={14} /> Upload photo
+              </>
+            )}
+          </Button>
+          <Controller
+            control={control}
+            name="basicInfo.profilePhoto"
+            render={({ field: { onChange, onBlur, name } }) => (
+              <input
+                ref={photoInputRef}
+                name={name}
+                onBlur={onBlur}
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    onChange(file);
+                    handleFileSelection(file);
+                  } else {
+                    onChange(undefined);
+                  }
+                }}
+              />
+            )}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            JPG or PNG under 5MB
+          </p>
+          {(photoError || basicInfoErrors?.avatarKey?.message || basicInfoErrors?.profilePhoto?.message) && (
+            <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+              <AlertCircle size={12} /> {photoError || (basicInfoErrors?.avatarKey?.message as string) || (basicInfoErrors?.profilePhoto?.message as string)}
+            </p>
+          )}
         </div>
       </div>
+
       <div className="grid grid-cols-2 gap-4">
-        <Input label="First name" defaultValue="Arjun" />
-        <Input label="Last name" defaultValue="Mehta" />
+        <Input
+          label="First name"
+          placeholder="e.g. John"
+          error={basicInfoErrors?.firstName?.message}
+          {...register("basicInfo.firstName")}
+        />
+        <Input
+          label="Last name"
+          placeholder="e.g. Doe"
+          error={basicInfoErrors?.lastName?.message}
+          {...register("basicInfo.lastName")}
+        />
       </div>
-      <Input label="Current title" defaultValue="Senior Frontend Engineer" />
-      <Input label="Current company" defaultValue="Acme Corp" />
-      <div className="grid grid-cols-2 gap-4">
-        <Input label="Years of experience" type="number" defaultValue="6" />
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">Location</label>
-          <select className="h-10 rounded-md border border-border bg-card px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-            <option>Bangalore, India</option>
-            <option>Mumbai, India</option>
-            <option>Hyderabad, India</option>
-            <option>Delhi, India</option>
-            <option>Remote</option>
-          </select>
-        </div>
-      </div>
-      <div className="border border-dashed border-border rounded-lg p-4 flex flex-col items-center gap-2 text-center">
-        <Upload size={20} className="text-muted-foreground" />
-        <p className="text-sm font-medium">Upload resume</p>
-        <p className="text-xs text-muted-foreground">PDF, DOCX up to 5 MB</p>
-        <Button variant="outline" size="sm" type="button"><Upload size={14} /> Choose file</Button>
-      </div>
+
+      <Controller
+        control={control}
+        name="basicInfo.location"
+        render={({ field }) => (
+          <EditableSelect
+            label="Location"
+            value={field.value}
+            onChange={field.onChange}
+            options={locationOptions}
+            customPlaceholder="e.g. New York, USA"
+            error={basicInfoErrors?.location?.message}
+          />
+        )}
+      />
     </div>
-  )
+  );
 }
